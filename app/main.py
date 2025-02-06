@@ -1,20 +1,24 @@
 from fastapi import FastAPI
 import uvicorn
 import os
+from app.api.routes import users
+from app.db.init_db import init_db
 
-from api.routes import auth
-# from api.routes import users, projects, auth
 
 app = FastAPI(title="Freelance Platform API", version="1.0.0")
-
-# app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-# app.include_router(users.router, prefix="/users", tags=["Users"])
-# app.include_router(projects.router, prefix="/projects", tags=["Projects"])
 
 
 @app.get("/")
 def root():
     return {"message": "Wellcome to IP-lance"}
+
+
+@app.on_event("startup")
+async def startup_event():
+    init_db()
+
+
+app.include_router(users.router, prefix="/users", tags=["users"])
 
 
 if __name__ == "__main__":
