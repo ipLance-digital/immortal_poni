@@ -6,6 +6,9 @@ import os
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# TODO: Подключить Redis для хранения blacklist
+token_blacklist = set()
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -21,4 +24,12 @@ def create_access_token(data: dict):
         os.getenv("SECRET_KEY"), 
         algorithm=os.getenv("ALGORITHM")
     )
-    return encoded_jwt 
+    return encoded_jwt
+
+def blacklist_token(token: str, expires: int):
+    """Добавляем токен в черный список"""
+    token_blacklist.add(token)
+
+def is_token_blacklisted(token: str) -> bool:
+    """Проверяем, находится ли токен в черном списке"""
+    return token in token_blacklist 
