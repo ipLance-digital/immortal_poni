@@ -7,28 +7,7 @@ from app.routers import get_router
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
-    title="Freelance Platform API",
-    description="""
-    API для фриланс платформы. 
-    
-    ## Возможности
-    * Регистрация и авторизация пользователей
-    * Управление профилями
-    * JWT авторизация
-    
-    ## Технологии
-    * FastAPI
-    * SQLAlchemy
-    * PostgreSQL
-    """,
-    version="1.0.0",
-    contact={
-        "name": "IP-lance Team",
-        "url": "https://github.com/your-repo",
-        "email": "admin@example.com",
-    },
-)
+app = FastAPI(title="Freelance Platform API", version="1.0.0")
 
 router = get_router()
 app.include_router(router, prefix="/api/v1")
