@@ -1,0 +1,21 @@
+Чтобы проверить работоспособность миграций, выполните следующие команды:
+
+Создать миграцию:
+
+alembic revision --autogenerate -m "Initial migration"
+
+Применить миграцию:
+
+alembic upgrade head
+
+Проверить статус:
+
+alembic current
+
+Проверить историю миграций:
+
+alembic history
+
+Откатить на одну миграцию назад:
+
+alembic downgrade -1

@@ -40,3 +40,27 @@
 Для запуска тестов используйте команду:
 
 - pytest
+
+### Миграции
+
+Для создания и применения миграций используйте команду:
+
+- alembic init migrations
+- alembic migrate
+
+### Миграций
+
+- Создать новую миграцию
+alembic revision --autogenerate -m "описание изменений"
+
+- Применить все миграции
+alembic upgrade head
+
+- Откатить на одну миграцию назад
+alembic downgrade -1
+
+- Посмотреть текущую версию БД
+alembic current
+
+- Посмотреть историю миграций
+alembic history
