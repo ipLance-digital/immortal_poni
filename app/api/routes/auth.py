@@ -11,8 +11,8 @@ from sqlalchemy import func
 import os
 from datetime import datetime
 
-from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
+from app.models.users import Users
+from app.schemas.users import UserCreate, UserResponse
 from app.core.security import verify_password, get_password_hash, create_access_token, blacklist_token, is_token_blacklisted
 from app.database import get_db
 from app.schemas.auth import Token
@@ -26,7 +26,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Session = Depends(get_db)
-) -> User:
+) -> Users:
     """
     Получение текущего пользователя из JWT токена.
 
@@ -61,7 +61,7 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(Users).filter(Users.username == username).first()
     if user is None:
         raise credentials_exception
     return user
@@ -81,20 +81,20 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     Raises:
         HTTPException: Если email или username уже заняты
     """
-    db_user = db.query(User).filter(
-        User.username == user.username
+    db_user = db.query(Users).filter(
+        Users.username == user.username
     ).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    db_user = db.query(User).filter(
-        User.email == user.email
+    db_user = db.query(Users).filter(
+        Users.email == user.email
     ).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_password = get_password_hash(user.password)
-    db_user = User(
+    db_user = Users(
         email=user.email,
         username=user.username,
         hashed_password=hashed_password
@@ -119,8 +119,8 @@ async def login(
         JWT токен для авторизации
     """
     logger.info(f"Login attempt for user: {form_data.username}")
-    user = db.query(User).filter(
-        func.lower(User.username) == func.lower(form_data.username)
+    user = db.query(Users).filter(
+        func.lower(Users.username) == func.lower(form_data.username)
     ).first()
     
     if not user:
@@ -145,7 +145,7 @@ async def login(
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[Users, Depends(get_current_user)]
 ):
     """
     Получение данных текущего пользователя.
@@ -157,7 +157,7 @@ async def read_users_me(
 
 @router.post("/logout")
 async def logout(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[Users, Depends(get_current_user)],
     token: str = Depends(oauth2_scheme)
 ):
     """

@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from app.database import get_db
-from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserList
+from app.models.users import Users
+from app.schemas.users import UserCreate, UserUpdate, UserResponse, UserList
 from app.core.security import get_password_hash
 from app.api.routes.auth import get_current_user
 
@@ -20,7 +20,7 @@ async def get_users(
     skip: int = 0,
     limit: int = 10,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Users = Depends(get_current_user)
 ) -> UserList:
     """
     Получение списка пользователей с пагинацией.
@@ -34,15 +34,15 @@ async def get_users(
     Returns:
         UserList: Список пользователей и общее количество
     """
-    users = db.query(User).offset(skip).limit(limit).all()
-    total = db.query(User).count()
+    users = db.query(Users).offset(skip).limit(limit).all()
+    total = db.query(Users).count()
     return {"total": total, "items": users}
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Users = Depends(get_current_user)
 ) -> UserResponse:
     """
     Получение данных конкретного пользователя.
@@ -58,7 +58,7 @@ async def get_user(
     Raises:
         HTTPException: Если пользователь не найден
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(Users).filter(Users.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -67,7 +67,7 @@ async def get_user(
 async def create_user(
     user: UserCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Users = Depends(get_current_user)
 ) -> UserResponse:
     """
     Создание нового пользователя.
@@ -83,16 +83,16 @@ async def create_user(
     Raises:
         HTTPException: Если email или username уже заняты
     """
-    db_user = db.query(User).filter(User.email == user.email).first()
+    db_user = db.query(Users).filter(Users.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    db_user = db.query(User).filter(User.username == user.username).first()
+    db_user = db.query(Users).filter(Users.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
 
     hashed_password = get_password_hash(user.password)
-    db_user = User(
+    db_user = Users(
         email=user.email,
         username=user.username,
         hashed_password=hashed_password
@@ -107,7 +107,7 @@ async def update_user(
     user_id: UUID,
     user: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: Users = Depends(get_current_user)
 ) -> UserResponse:
     """
     Обновление данных пользователя.
@@ -124,7 +124,7 @@ async def update_user(
     Raises:
         HTTPException: Если пользователь не найден
     """
-    db_user = db.query(User).filter(User.id == user_id).first()
+    db_user = db.query(Users).filter(Users.id == user_id).first()
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
