@@ -1,13 +1,53 @@
-from sqlalchemy import Boolean, Column, Integer, String, DateTime
+"""
+Модуль моделей базы данных.
+Содержит SQLAlchemy модели для работы с таблицами.
+"""
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, UUID
 from sqlalchemy.sql import func
-from database import Base
+from app.database import Base
+from uuid import uuid4
 
 class User(Base):
+    """
+    Модель пользователя.
+    
+    Attributes:
+        id (UUID): Уникальный идентификатор пользователя
+        email (str): Email пользователя (уникальный)
+        username (str): Имя пользователя (уникальное)
+        hashed_password (str): Хешированный пароль
+        is_active (bool): Статус активности пользователя
+        created_at (datetime): Дата и время создания
+    """
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id = Column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        default=uuid4,
+        index=True
+    )
+    email = Column(
+        String, 
+        unique=True, 
+        index=True,
+        nullable=False
+    )
+    username = Column(
+        String, 
+        unique=True, 
+        index=True,
+        nullable=False
+    )
+    hashed_password = Column(
+        String,
+        nullable=False
+    )
+    is_active = Column(
+        Boolean, 
+        default=True
+    )
+    created_at = Column(
+        DateTime(timezone=True), 
+        server_default=func.now()
+    )

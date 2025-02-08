@@ -1,3 +1,7 @@
+"""
+    Модуль логирования.
+    Настраивает логирование в файл и консоль с ротацией логов.
+"""
 import logging
 from logging.handlers import RotatingFileHandler
 import os

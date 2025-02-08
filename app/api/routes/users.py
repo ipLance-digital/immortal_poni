@@ -1,3 +1,7 @@
+"""
+Модуль управления пользователями.
+Содержит CRUD операции для работы с пользователями.
+"""
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -17,15 +21,18 @@ async def get_users(
     limit: int = 10,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
-):
+) -> UserList:
     """
     Получение списка пользователей с пагинацией.
 
-    - **skip**: сколько записей пропустить
-    - **limit**: максимальное количество записей
+    Args:
+        skip: Количество пропускаемых записей
+        limit: Максимальное количество возвращаемых записей
+        db: Сессия базы данных
+        current_user: Текущий авторизованный пользователь
 
     Returns:
-        Список пользователей и общее количество
+        UserList: Список пользователей и общее количество
     """
     users = db.query(User).offset(skip).limit(limit).all()
     total = db.query(User).count()
@@ -36,14 +43,20 @@ async def get_user(
     user_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
-):
+) -> UserResponse:
     """
     Получение данных конкретного пользователя.
 
-    - **user_id**: UUID пользователя
+    Args:
+        user_id: UUID пользователя
+        db: Сессия базы данных
+        current_user: Текущий авторизованный пользователь
 
     Returns:
-        Данные пользователя
+        UserResponse: Данные пользователя
+
+    Raises:
+        HTTPException: Если пользователь не найден
     """
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
@@ -55,7 +68,21 @@ async def create_user(
     user: UserCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
-):
+) -> UserResponse:
+    """
+    Создание нового пользователя.
+
+    Args:
+        user: Данные для создания пользователя
+        db: Сессия базы данных
+        current_user: Текущий авторизованный пользователь
+
+    Returns:
+        UserResponse: Данные созданного пользователя
+
+    Raises:
+        HTTPException: Если email или username уже заняты
+    """
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -81,15 +108,21 @@ async def update_user(
     user: UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
-):
+) -> UserResponse:
     """
     Обновление данных пользователя.
 
-    - **user_id**: UUID пользователя
-    - **user**: Данные для обновления (все поля опциональны)
+    Args:
+        user_id: UUID пользователя
+        user: Данные для обновления
+        db: Сессия базы данных
+        current_user: Текущий авторизованный пользователь
 
     Returns:
-        Обновленные данные пользователя
+        UserResponse: Обновленные данные пользователя
+
+    Raises:
+        HTTPException: Если пользователь не найден
     """
     db_user = db.query(User).filter(User.id == user_id).first()
     if db_user is None:

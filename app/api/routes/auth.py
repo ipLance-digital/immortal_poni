@@ -1,3 +1,7 @@
+"""
+Модуль аутентификации и авторизации.
+Содержит эндпоинты для регистрации, входа и управления токенами.
+"""
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -22,7 +26,20 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Session = Depends(get_db)
-):
+) -> User:
+    """
+    Получение текущего пользователя из JWT токена.
+
+    Args:
+        token: JWT токен из заголовка Authorization
+        db: Сессия базы данных
+
+    Returns:
+        User: Объект пользователя
+
+    Raises:
+        HTTPException: Если токен недействителен или пользователь не найден
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -54,12 +71,15 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     """
     Регистрация нового пользователя.
 
-    - **email**: Email пользователя
-    - **username**: Уникальное имя пользователя
-    - **password**: Пароль (минимум 8 символов)
+    Args:
+        user: Данные нового пользователя
+        db: Сессия базы данных
 
     Returns:
-        Данные созданного пользователя
+        UserResponse: Данные созданного пользователя
+
+    Raises:
+        HTTPException: Если email или username уже заняты
     """
     db_user = db.query(User).filter(
         User.username == user.username
