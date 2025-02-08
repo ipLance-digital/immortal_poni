@@ -1,36 +1,47 @@
-import asyncpg
+"""
+Основной модуль приложения.
+Инициализирует FastAPI приложение, подключает роутеры и настраивает запуск сервера.
+"""
 from fastapi import FastAPI
 import uvicorn
-import os
-from database.postgres import UnitOfWork, User
+from app import database
+from app.routers import get_router
+from app.core.config import settings
 
+database.Base.metadata.create_all(bind=database.engine)
 
-app = FastAPI(title="Freelance Platform API", version="1.0.0")
+app = FastAPI(
+    title=settings.APP_NAME,
+    version="1.0.0",
+    description="""
+    API для фриланс платформы. 
+    
+    ## Возможности
+    * Регистрация и авторизация пользователей
+    * Управление профилями
+    * JWT авторизация
+    """
+)
 
+router = get_router()
+app.include_router(router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():
-    return {"message": "Wellcome to IP-lance"}
-
-
-@app.get("/create_user")
-async def create_user():
-    connection = await asyncpg.connect(user='postgres', password='postgres',
-                                       database='test', host='127.0.0.1')
-    async with UnitOfWork(connection) as uow:
-        new_user = User(id=1, name='Alice')
-        await uow.user_repository.add_user(new_user)
-
-
-@app.get("/get_user")
-async def get_user():
-    connection = await asyncpg.connect(user='postgres', password='postgres',
-                                       database='test', host='127.0.0.1')
-    async with UnitOfWork(connection) as uow:
-        user = await uow.user_repository.get_user(1)
-    return {"user": user.name}
-
+    """
+    Корневой эндпоинт для проверки работоспособности API.
+    
+    Returns:
+        dict: Приветственное сообщение
+    """
+    return {"message": "Welcome to IP-lance"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=os.getenv("LOCALHOST"))
+    uvicorn.run(
+        "app.main:app",
+        host=settings.LOCALHOST,
+        port=settings.PORT,
+        reload=settings.DEBUG
+    )
+
 
