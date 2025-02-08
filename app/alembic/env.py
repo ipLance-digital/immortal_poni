@@ -4,9 +4,7 @@ from sqlalchemy import pool
 from alembic import context
 import os
 from dotenv import load_dotenv
-
-# Импортируем Base из моделей
-from app.models import Base
+from app.database import Base
 
 # Загружаем переменные из .env
 load_dotenv()
