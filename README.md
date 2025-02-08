@@ -21,6 +21,24 @@
 - uv venv --python=python3.12
 - uv pip install -r requirements.txt
 
+### Запуск
+
+- uvicorn app.main:app --reload
+
+или через python:
+
+- python -m uvicorn app.main:app --reload
+
+### API
+
+Документация API доступна по адресу:
+
+
+- host/docs
+
+
+
+
 ### Тесты
 
 Для запуска тестов используйте команду:
