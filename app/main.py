@@ -4,12 +4,11 @@
 """
 from fastapi import FastAPI
 import uvicorn
-from app.database import engine, Base
+from app import database
 from app.routers import get_router
 from app.core.config import settings
 
-
-Base.metadata.create_all(bind=engine)
+database.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(
     title=settings.APP_NAME,
