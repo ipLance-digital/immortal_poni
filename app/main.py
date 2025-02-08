@@ -1,6 +1,6 @@
 """
-Основной модуль приложения.
-Инициализирует FastAPI приложение, подключает роутеры и настраивает запуск сервера.
+    Основной модуль приложения.
+    Инициализирует FastAPI приложение, подключает роутеры и настраивает запуск сервера.
 """
 from fastapi import FastAPI
 import uvicorn
@@ -14,12 +14,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
     description="""
-    API для фриланс платформы. 
-    
-    ## Возможности
-    * Регистрация и авторизация пользователей
-    * Управление профилями
-    * JWT авторизация
+    API для IP-lance. 
     """
 )
 
@@ -29,12 +24,13 @@ app.include_router(router, prefix=settings.API_V1_STR)
 @app.get("/")
 def root():
     """
-    Корневой эндпоинт для проверки работоспособности API.
+    Корневой эндпоинт для проверки API.
     
     Returns:
-        dict: Приветственное сообщение
+        dict: message
     """
     return {"message": "Welcome to IP-lance"}
+
 
 if __name__ == "__main__":
     uvicorn.run(

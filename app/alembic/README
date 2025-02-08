@@ -1,21 +1,3 @@
-Чтобы проверить работоспособность миграций, выполните следующие команды:
+- Создать новую миграцию
 
-Создать миграцию:
-
-alembic -c app/alembic.ini revision --autogenerate -m "Initial migration"
-
-Применить миграцию:
-
-alembic -c app/alembic.ini upgrade head
-
-Проверить статус:
-
-alembic -c app/alembic.ini current
-
-Проверить историю миграций:
-
-alembic -c app/alembic.ini history
-    
-Откатить на одну миграцию назад:
-
-alembic -c app/alembic.ini downgrade -1
+python .\app\scripts\safe_migrate.py
