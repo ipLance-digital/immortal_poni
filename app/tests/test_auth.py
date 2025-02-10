@@ -16,8 +16,12 @@ def test_register(client, db):
     assert data["email"] == "test@example.com"
     assert data["username"] == "testuser"
 
+
 def test_register_existing_email(client, db):
-    user = Users(id=uuid4(), email="duplicate@example.com", username="uniqueuser", hashed_password="hashed_pwd")
+    user = Users(id=uuid4(),
+                 email="duplicate@example.com",
+                 username="uniqueuser",
+                 hashed_password="hashed_pwd")
     db.add(user)
     db.commit()
 
@@ -30,9 +34,13 @@ def test_register_existing_email(client, db):
     assert response.status_code == 400
     assert response.json()["detail"] == "Email already registered"
 
+
 def test_register_existing_username(client, db):
     # Создаем пользователя с существующим username
-    user = Users(id=uuid4(), email="uniqueemail@example.com", username="duplicateuser", hashed_password="hashed_pwd")
+    user = Users(id=uuid4(),
+                 email="uniqueemail@example.com",
+                 username="duplicateuser",
+                 hashed_password="hashed_pwd")
     db.add(user)
     db.commit()
 
@@ -45,30 +53,36 @@ def test_register_existing_username(client, db):
     assert response.status_code == 400
     assert response.json()["detail"] == "Username already registered"
 
+
 def test_login_success(client, db):
     user = Users(
         id=uuid4(),
         email="login@example.com",
         username="loginuser",
-        hashed_password=get_password_hash("password") 
+        hashed_password=get_password_hash("password")
     )
     db.add(user)
     db.commit()
 
     # Попытка входа с правильным паролем
-    response = client.post("/api/v1/auth/login", data={"username": "loginuser", "password": "password"})
+    response = client.post("/api/v1/auth/login",
+                           data={"username": "loginuser",
+                                 "password": "password"})
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
 
+
 def test_login_wrong_username(client, db):
-    response = client.post("api/v1/auth/login", data={"username": "nonexistent", "password": "password"})
+    response = client.post("api/v1/auth/login",
+                           data={"username": "nonexistent",
+                                 "password": "password"})
     assert response.status_code == 401
     assert response.json()["detail"] == "Incorrect username or password"
 
+
 def test_login_wrong_password(client, db):
-    # Создаем пользователя
     user = Users(
         id=uuid4(),
         email="wrongpwd@example.com",
@@ -78,13 +92,19 @@ def test_login_wrong_password(client, db):
     db.add(user)
     db.commit()
 
-    response = client.post("api/v1/auth/login", data={"username": "wrongpwduser", "password": "wrongpassword"})
+    response = client.post("api/v1/auth/login",
+                           data={"username": "wrongpwduser",
+                                 "password": "wrongpassword"})
     assert response.status_code == 401
     assert response.json()["detail"] == "Incorrect username or password"
 
+
 def test_read_users_me(client, db):
     from app.core.security import create_access_token
-    user = Users(id=uuid4(), email="me@example.com", username="meuser", hashed_password="hashed_pwd")
+    user = Users(id=uuid4(),
+                 email="me@example.com",
+                 username="meuser",
+                 hashed_password="hashed_pwd")
     db.add(user)
     db.commit()
 
@@ -97,9 +117,13 @@ def test_read_users_me(client, db):
     assert data["email"] == "me@example.com"
     assert data["username"] == "meuser"
 
+
 def test_logout(client, db):
     from app.core.security import create_access_token
-    user = Users(id=uuid4(), email="logout@example.com", username="logoutuser", hashed_password="hashed_pwd")
+    user = Users(id=uuid4(),
+                 email="logout@example.com",
+                 username="logoutuser",
+                 hashed_password="hashed_pwd")
     db.add(user)
     db.commit()
 
@@ -110,9 +134,10 @@ def test_logout(client, db):
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
 
+
 def test_logout_invalid_token(client):
     headers = {"Authorization": "Bearer invalidtoken"}
 
     response = client.post("/api/v1/auth/logout", headers=headers)
     assert response.status_code == 401
-    assert response.json()["detail"] == "Could not validate credentials" 
+    assert response.json()["detail"] == "Could not validate credentials"
