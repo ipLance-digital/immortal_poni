@@ -1,4 +1,3 @@
-import pytest
 from uuid import uuid4
 from app.models.users import Users
 from app.core.security import get_password_hash
