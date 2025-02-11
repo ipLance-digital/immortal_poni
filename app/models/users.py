@@ -38,15 +38,12 @@ class Users(Base):
     is_verified: Mapped[bool] = mapped_column(
         Boolean, server_default=expression.false()
     )
-    is_active: Mapped[bool] = mapped_column()
-
     skill_connectors: Mapped[List["UserSkillConnector"]] = relationship(
         "UserSkillConnector", back_populates="user"
     )
     skills: Mapped[List["UserSkills"]] = relationship(
         "UserSkills", secondary="user_skills_connector", back_populates="users"
     )
-
     review_connectors: Mapped[List["UserReviewConnector"]] = relationship(
         "UserReviewConnector", back_populates="user", cascade="all, delete-orphan"
     )
