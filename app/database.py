@@ -12,7 +12,6 @@ engine = create_engine(
     max_overflow=settings.DB_MAX_OVERFLOW
 )
 
-# Фабрика сессий
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
