@@ -22,6 +22,7 @@ app = FastAPI(
 router = get_router()
 app.include_router(router, prefix=settings.API_V1_STR)
 
+
 @app.get("/")
 def root():
     """
