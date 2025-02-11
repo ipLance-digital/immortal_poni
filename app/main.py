@@ -5,10 +5,11 @@
 from fastapi import FastAPI
 import uvicorn
 from app import database
+from app.models.base_model import Base
 from app.routers import get_router
 from app.core.config import settings
 
-database.Base.metadata.create_all(bind=database.engine)
+Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(
     title=settings.APP_NAME,
