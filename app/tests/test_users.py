@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from uuid import uuid4
 from app.models.users import Users
@@ -5,12 +7,26 @@ from app.core.security import create_access_token
 
 
 def test_get_users(client, db):
-    user1 = Users(id=uuid4(),
-                  email="user1@example.com",
-                  username="user1",
-                  hashed_password="hashed_pwd1")
-    user2 = Users(id=uuid4(), email="user2@example.com", username="user2",
-                  hashed_password="hashed_pwd2")
+    user1 = Users(
+        id=uuid4(),
+        email="user1@example.com",
+        username="user1",
+        hashed_password="hashed_pwd1",
+        phone="1234567890",
+        telegram_id="user1_telegram",
+        is_verified=True,
+        created_at=datetime.utcnow()
+    )
+    user2 = Users(
+        id=uuid4(),
+        email="user2@example.com",
+        username="user2",
+        hashed_password="hashed_pwd2",
+        phone="0987654321",
+        telegram_id="user2_telegram",
+        is_verified=False,
+        created_at=datetime.utcnow()
+    )
     db.add(user1)
     db.add(user2)
     db.commit()
