@@ -32,7 +32,7 @@ class Users(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )
-    phone: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    phone: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
     telegram_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     last_activity: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     is_verified: Mapped[bool] = mapped_column(

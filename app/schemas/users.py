@@ -32,6 +32,8 @@ class UserCreate(UserBase):
     email: EmailStr = Field(..., example="user@example.com")
     username: str = Field(..., example="johndoe")
     password: str = Field(..., min_length=8, example="strongpass123")
+    phone: int = Field(..., example=1234567890)
+    telegram_id: str = Field(..., example="1234567890")
 
 
 class UserUpdate(BaseModel):
@@ -59,11 +61,9 @@ class UserResponse(UserBase):
         id (UUID): Уникальный идентификатор
         email (EmailStr): Email пользователя
         username (str): Имя пользователя
-        is_active (bool): Статус активности
         created_at (datetime): Дата и время создания
     """
     id: UUID
-    is_active: bool
     created_at: datetime
 
     class Config:

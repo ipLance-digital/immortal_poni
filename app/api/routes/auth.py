@@ -109,6 +109,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         hashed_password=hashed_password,
         phone=user.phone,
+        telegram_id=user.telegram_id,
     )
     db.add(db_user)
     db.commit()
