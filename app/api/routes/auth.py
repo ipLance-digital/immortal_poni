@@ -11,6 +11,8 @@ from sqlalchemy import func
 import os
 from datetime import datetime
 
+from starlette.responses import JSONResponse
+
 from app.models.users import Users
 from app.schemas.users import UserCreate, UserResponse
 from app.core.security import verify_password, get_password_hash, \
@@ -133,7 +135,7 @@ async def login(
     """
     logger.info(f"Login attempt for user: {form_data.username}")
     user = db.query(Users).filter(
-        func.lower(Users.username) == func.lower(form_data.username)
+        Users.username.ilike(form_data.username)
     ).first()
 
     if not user:
@@ -156,7 +158,11 @@ async def login(
 
     logger.info(f"Successful login for user: {form_data.username}")
     access_token = create_access_token(data={"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    return JSONResponse(
+        content={"access_token": access_token, "token_type": "bearer"},
+        status_code=status.HTTP_200_OK,
+    )
 
 
 @router.get("/me", response_model=UserResponse)
