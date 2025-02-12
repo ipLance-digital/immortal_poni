@@ -17,6 +17,9 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.orders import Order
 
 
 class Users(Base):
@@ -50,6 +53,7 @@ class Users(Base):
     reviews: Mapped[List["Review"]] = relationship(
         "Review", secondary="user_reviews_connector", back_populates="users"
     )
+    orders: Mapped[list["Order"]] = relationship("Order", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserSkills(Base):
