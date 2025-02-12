@@ -13,19 +13,20 @@ from datetime import datetime
 
 from app.models.users import Users
 from app.schemas.users import UserCreate, UserResponse
-from app.core.security import verify_password, get_password_hash, create_access_token, blacklist_token, is_token_blacklisted
+from app.core.security import verify_password, get_password_hash, \
+    create_access_token, blacklist_token, is_token_blacklisted
 from app.database import get_db
 from app.schemas.auth import Token
 from app.core.logger import logger
-
 
 router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
+
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    db: Session = Depends(get_db)
+        token: Annotated[str, Depends(oauth2_scheme)],
+        db: Session = Depends(get_db)
 ) -> Users:
     """
     Получение текущего пользователя из JWT токена.
@@ -54,7 +55,8 @@ async def get_current_user(
         )
 
     try:
-        payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
+        payload = jwt.decode(token, os.getenv("SECRET_KEY"),
+                             algorithms=[os.getenv("ALGORITHM")])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -65,6 +67,7 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
 
 @router.post("/register", response_model=UserResponse)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -85,29 +88,38 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         Users.username == user.username
     ).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
-    
+        raise HTTPException(status_code=400,
+                            detail="Username already registered")
+
     db_user = db.query(Users).filter(
         Users.email == user.email
     ).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    db_user = db.query(Users).filter(
+        Users.phone == user.phone
+    ).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Phone already registered")
+
     hashed_password = get_password_hash(user.password)
     db_user = Users(
         email=user.email,
         username=user.username,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        phone=user.phone,
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
 
+
 @router.post("/login", response_model=Token)
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    db: Session = Depends(get_db)
+        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        db: Session = Depends(get_db)
 ):
     """
     Авторизация пользователя.
@@ -122,30 +134,33 @@ async def login(
     user = db.query(Users).filter(
         func.lower(Users.username) == func.lower(form_data.username)
     ).first()
-    
+
     if not user:
-        logger.warning(f"Failed login attempt: user {form_data.username} not found")
+        logger.warning(
+            f"Failed login attempt: user {form_data.username} not found")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if not verify_password(form_data.password, user.hashed_password):
-        logger.warning(f"Failed login attempt: incorrect password for user {form_data.username}")
+        logger.warning(
+            f"Failed login attempt: incorrect password for user {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     logger.info(f"Successful login for user: {form_data.username}")
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
+
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(
-    current_user: Annotated[Users, Depends(get_current_user)]
+        current_user: Annotated[Users, Depends(get_current_user)]
 ):
     """
     Получение данных текущего пользователя.
@@ -155,10 +170,11 @@ async def read_users_me(
     """
     return current_user
 
+
 @router.post("/logout")
 async def logout(
-    current_user: Annotated[Users, Depends(get_current_user)],
-    token: str = Depends(oauth2_scheme)
+        current_user: Annotated[Users, Depends(get_current_user)],
+        token: str = Depends(oauth2_scheme)
 ):
     """
     Выход из системы.
@@ -179,9 +195,10 @@ async def logout(
             expires = exp - int(datetime.utcnow().timestamp())
             if expires > 0:
                 blacklist_token(token, expires)
-                logger.info(f"User {current_user.username} logged out successfully")
+                logger.info(
+                    f"User {current_user.username} logged out successfully")
                 return {"message": "Successfully logged out"}
     except JWTError:
         pass
-    
+
     raise HTTPException(status_code=400, detail="Invalid token")

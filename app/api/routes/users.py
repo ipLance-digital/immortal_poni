@@ -2,7 +2,7 @@
 Модуль управления пользователями.
 Содержит CRUD операции для работы с пользователями.
 """
-from typing import Annotated
+from typing import Annotated, Dict, List, Type
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
@@ -15,13 +15,13 @@ from app.api.routes.auth import get_current_user
 
 router = APIRouter()
 
+
 @router.get("", response_model=UserList)
 async def get_users(
-    skip: int = 0,
-    limit: int = 10,
-    db: Session = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
-) -> UserList:
+        skip: int = 0,
+        limit: int = 10,
+        db: Session = Depends(get_db),
+) -> dict[str, list[Type[Users]] | int]:
     """
     Получение списка пользователей с пагинацией.
 
@@ -29,7 +29,6 @@ async def get_users(
         skip: Количество пропускаемых записей
         limit: Максимальное количество возвращаемых записей
         db: Сессия базы данных
-        current_user: Текущий авторизованный пользователь
 
     Returns:
         UserList: Список пользователей и общее количество
@@ -38,11 +37,12 @@ async def get_users(
     total = db.query(Users).count()
     return {"total": total, "items": users}
 
+
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
-    user_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
+        user_id: UUID,
+        db: Session = Depends(get_db),
+        current_user: Users = Depends(get_current_user)
 ) -> UserResponse:
     """
     Получение данных конкретного пользователя.
@@ -58,17 +58,20 @@ async def get_user(
     Raises:
         HTTPException: Если пользователь не найден
     """
+
     user = db.query(Users).filter(Users.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post("",
+             response_model=UserResponse,
+             status_code=status.HTTP_201_CREATED)
 async def create_user(
-    user: UserCreate,
-    db: Session = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
-) -> UserResponse:
+        user: UserCreate,
+        db: Session = Depends(get_db),
+) -> Users:
     """
     Создание нового пользователя.
 
@@ -86,10 +89,11 @@ async def create_user(
     db_user = db.query(Users).filter(Users.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     db_user = db.query(Users).filter(Users.username == user.username).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400,
+                            detail="Username already registered")
 
     hashed_password = get_password_hash(user.password)
     db_user = Users(
@@ -102,12 +106,13 @@ async def create_user(
     db.refresh(db_user)
     return db_user
 
+
 @router.patch("/{user_id}", response_model=UserResponse)
 async def update_user(
-    user_id: UUID,
-    user: UserUpdate,
-    db: Session = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
+        user_id: UUID,
+        user: UserUpdate,
+        db: Session = Depends(get_db),
+        current_user: Users = Depends(get_current_user)
 ) -> UserResponse:
     """
     Обновление данных пользователя.
@@ -129,10 +134,11 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
 
     update_data = user.model_dump(exclude_unset=True)
-    
+
     if "password" in update_data:
-        update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
-    
+        update_data["hashed_password"] = get_password_hash(
+            update_data.pop("password"))
+
     for field, value in update_data.items():
         setattr(db_user, field, value)
 
