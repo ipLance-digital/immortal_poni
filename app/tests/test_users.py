@@ -15,7 +15,7 @@ def test_get_users(client, db):
         phone="1234567890",
         telegram_id="user1_telegram",
         is_verified=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     )
     user2 = Users(
         id=uuid4(),
@@ -25,7 +25,7 @@ def test_get_users(client, db):
         phone="0987654321",
         telegram_id="user2_telegram",
         is_verified=False,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     )
     db.add(user1)
     db.add(user2)
@@ -40,10 +40,12 @@ def test_get_users(client, db):
 
 
 def test_get_user(client, db):
-    user = Users(id=uuid4(),
-                 email="user3@example.com",
-                 username="user3",
-                 hashed_password="hashed_pwd3")
+    user = Users(
+        id=uuid4(),
+        email="user3@example.com",
+        username="user3",
+        hashed_password="hashed_pwd3",
+    )
     db.add(user)
     db.commit()
     token = create_access_token(data={"sub": user.username})
@@ -56,10 +58,12 @@ def test_get_user(client, db):
 
 
 def test_get_user_not_found(client, db):
-    user = Users(id=uuid4(),
-                 email="user@example.com",
-                 username="testuser",
-                 hashed_password="hashed_pwd")
+    user = Users(
+        id=uuid4(),
+        email="user@example.com",
+        username="testuser",
+        hashed_password="hashed_pwd",
+    )
     db.add(user)
     db.commit()
     non_existent_id = uuid4()
@@ -71,10 +75,12 @@ def test_get_user_not_found(client, db):
 
 
 def test_create_user(client, db):
-    user = Users(id=uuid4(),
-                 email="user@example.com",
-                 username="testuser",
-                 hashed_password="hashed_pwd")
+    user = Users(
+        id=uuid4(),
+        email="user@example.com",
+        username="testuser",
+        hashed_password="hashed_pwd",
+    )
     db.add(user)
     db.commit()
     non_existent_id = uuid4()
@@ -82,7 +88,7 @@ def test_create_user(client, db):
     payload = {
         "email": "newuser@example.com",
         "username": "newuser",
-        "password": "newpassword"
+        "password": "newpassword",
     }
     headers = {"Authorization": f"Bearer {token}"}
     response = client.post("/api/v1/users", json=payload, headers=headers)
@@ -94,16 +100,18 @@ def test_create_user(client, db):
 
 
 def test_create_user_existing_email(client, db):
-    user = Users(id=uuid4(),
-                 email="existing@example.com",
-                 username="existinguser",
-                 hashed_password="hashed_pwd")
+    user = Users(
+        id=uuid4(),
+        email="existing@example.com",
+        username="existinguser",
+        hashed_password="hashed_pwd",
+    )
     db.add(user)
     db.commit()
     payload = {
         "email": "existing@example.com",
         "username": "newuser2",
-        "password": "newpassword"
+        "password": "newpassword",
     }
     token = create_access_token(data={"sub": "existinguser"})
     headers = {"Authorization": f"Bearer {token}"}
@@ -113,17 +121,19 @@ def test_create_user_existing_email(client, db):
 
 
 def test_create_user_existing_username(client, db):
-    user = Users(id=uuid4(),
-                 email="unique@example.com",
-                 username="existingusername",
-                 hashed_password="hashed_pwd")
+    user = Users(
+        id=uuid4(),
+        email="unique@example.com",
+        username="existingusername",
+        hashed_password="hashed_pwd",
+    )
     db.add(user)
     db.commit()
 
     payload = {
         "email": "newunique@example.com",
         "username": "existingusername",
-        "password": "newpassword"
+        "password": "newpassword",
     }
     token = create_access_token(data={"sub": "existingusername"})
     headers = {"Authorization": f"Bearer {token}"}
@@ -133,20 +143,18 @@ def test_create_user_existing_username(client, db):
 
 
 def test_update_user(client, db):
-    user = Users(id=uuid4(),
-                 email="updateuser@example.com",
-                 username="updateuser",
-                 hashed_password="hashed_pwd")
+    user = Users(
+        id=uuid4(),
+        email="updateuser@example.com",
+        username="updateuser",
+        hashed_password="hashed_pwd",
+    )
     db.add(user)
     db.commit()
-    payload = {
-        "email": "updated@example.com",
-        "password": "newhashedpassword"
-    }
+    payload = {"email": "updated@example.com", "password": "newhashedpassword"}
     token = create_access_token(data={"sub": user.username})
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.patch(f"/api/v1/users/{user.id}", json=payload,
-                            headers=headers)
+    response = client.patch(f"/api/v1/users/{user.id}", json=payload, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["email"] == "updated@example.com"
