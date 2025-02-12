@@ -71,13 +71,12 @@ async def get_current_user(
 
 
 @router.post("/register", response_model=UserResponse)
-async def register(user: UserCreate, db: Session = Depends(get_db)):
+async def register(user: UserCreate):
     """
     Регистрация нового пользователя.
 
     Args:
         user: Данные нового пользователя
-        db: Сессия базы данных
 
     Returns:
         UserResponse: Данные созданного пользователя
@@ -85,22 +84,16 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     Raises:
         HTTPException: Если email или username уже заняты
     """
-    db_user = db.query(Users).filter(
-        Users.username.ilike(user.username)
-    ).first()
+    db_user = Users.filter(username=user.username).first()
     if db_user:
         raise HTTPException(status_code=400,
                             detail="Username already registered")
 
-    db_user = db.query(Users).filter(
-        Users.email.ilike(user.email)
-    ).first()
+    db_user = Users.filter(email=user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    db_user = db.query(Users).filter(
-        Users.phone == user.phone
-    ).first()
+    db_user = Users.filter(phone=user.phone).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Phone already registered")
 
@@ -112,16 +105,13 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         phone=user.phone,
         telegram_id=user.telegram_id,
     )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    Users.save(db_user)
     return db_user
 
 
 @router.post("/login", response_model=Token)
 async def login(
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        db: Session = Depends(get_db)
+        form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
     """
     Авторизация пользователя.
@@ -133,9 +123,7 @@ async def login(
         JWT токен для авторизации
     """
     logger.info(f"Login attempt for user: {form_data.username}")
-    user = db.query(Users).filter(
-        Users.username.ilike(form_data.username)
-    ).first()
+    user = Users.filter(username=form_data.username).first()
 
     if not user:
         logger.warning(
