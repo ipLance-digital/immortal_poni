@@ -99,7 +99,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     db_user = db.query(Users).filter(
-        Users.phone.ilike(user.phone)
+        Users.phone == user.phone
     ).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Phone already registered")
