@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
 
-from app.database import get_db
 from app.models.users import Users
 from app.schemas.users import UserCreate, UserUpdate, UserResponse, UserList
 from app.core.security import get_password_hash
@@ -21,7 +20,7 @@ router = APIRouter()
 async def get_users(
     skip: int = 0,
     limit: int = 10,
-    db: Session = Depends(get_db),
+    db: Session = Depends(),
     current_user: Users = Depends(get_current_user),
 ) -> UserList:
     """
@@ -43,7 +42,7 @@ async def get_users(
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: UUID,
-    db: Session = Depends(get_db),
+    db: Session = Depends(),
     current_user: Users = Depends(get_current_user),
 ) -> UserResponse:
     """
@@ -70,7 +69,7 @@ async def get_user(
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user: UserCreate,
-    db: Session = Depends(get_db),
+    db: Session = Depends(),
     current_user: Users = Depends(get_current_user),
 ) -> UserResponse:
     """
@@ -110,7 +109,7 @@ async def create_user(
 async def update_user(
     user_id: UUID,
     user: UserUpdate,
-    db: Session = Depends(get_db),
+    db: Session = Depends(),
     current_user: Users = Depends(get_current_user),
 ) -> UserResponse:
     """
@@ -136,7 +135,7 @@ async def update_user(
 
     if "password" in update_data:
         update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
-
+    
     for field, value in update_data.items():
         setattr(db_user, field, value)
 

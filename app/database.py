@@ -3,11 +3,6 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
 
-def get_db():
-    "Убери меня, я не хочу жить, я нужна для совместимости с синхронной авторизацией. И ее тоже убери"
-    pass
-
-
 class PgSingleton:
     """
     Пример использования атрибутов класса, если нужно соединение с базой или контекст

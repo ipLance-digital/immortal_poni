@@ -22,7 +22,6 @@ from app.core.security import (
     blacklist_token,
     is_token_blacklisted,
 )
-from app.database import get_db
 from app.schemas.auth import Token
 from app.core.logger import logger
 
@@ -32,7 +31,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
+    token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends()
 ) -> Users:
     """
     Получение текущего пользователя из JWT токена.
@@ -113,7 +112,7 @@ async def register(user: UserCreate):
 @router.post("/login", response_model=Token)
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    db: Session = Depends(get_db),
+    db: Session = Depends(),
 ):
     """
     Авторизация пользователя.
