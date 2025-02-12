@@ -1,6 +1,7 @@
 """
 Скрипт для безопасного выполнения миграций с бэкапом.
 """
+
 import subprocess
 import os
 from datetime import datetime
@@ -19,11 +20,7 @@ def create_backup(db_url: str, backup_dir: str = "backups") -> str:
     backup_file = f"{backup_dir}/backup_{timestamp}.sql"
 
     print(f"Creating backup: {backup_file}")
-    subprocess.run([
-        "pg_dump",
-        db_url,
-        "-f", backup_file
-    ], check=True)
+    subprocess.run(["pg_dump", db_url, "-f", backup_file], check=True)
 
     return backup_file
 
@@ -31,35 +28,29 @@ def create_backup(db_url: str, backup_dir: str = "backups") -> str:
 def run_migrations(alembic_ini: str = "app/alembic.ini"):
     """Запускает миграции"""
     print("Generating migration...")
-    subprocess.run([
-        "alembic",
-        "-c", alembic_ini,
-        "revision",
-        "--autogenerate",
-        "-m", "auto migration"
-    ], check=True)
+    subprocess.run(
+        [
+            "alembic",
+            "-c",
+            alembic_ini,
+            "revision",
+            "--autogenerate",
+            "-m",
+            "auto migration",
+        ],
+        check=True,
+    )
 
     print("\nMigration SQL preview:")
-    subprocess.run([
-        "alembic",
-        "-c", alembic_ini,
-        "upgrade",
-        "head",
-        "--sql"
-    ])
+    subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head", "--sql"])
 
     confirm = input("\nApply migration? [y/N]: ")
-    if confirm.lower() != 'y':
+    if confirm.lower() != "y":
         print("Migration cancelled")
         return
 
     print("\nApplying migration...")
-    subprocess.run([
-        "alembic",
-        "-c", alembic_ini,
-        "upgrade",
-        "head"
-    ], check=True)
+    subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head"], check=True)
 
 
 def main():

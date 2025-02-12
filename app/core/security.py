@@ -20,12 +20,11 @@ def get_password_hash(password):
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(
-        minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
+        minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+    )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
-        to_encode,
-        os.getenv("SECRET_KEY"),
-        algorithm=os.getenv("ALGORITHM")
+        to_encode, os.getenv("SECRET_KEY"), algorithm=os.getenv("ALGORITHM")
     )
     return encoded_jwt
 
