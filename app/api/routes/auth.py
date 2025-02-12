@@ -2,12 +2,11 @@
 Модуль аутентификации и авторизации.
 Содержит эндпоинты для регистрации, входа и управления токенами.
 """
-from typing import Annotated
+from typing import Annotated, Type
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 import os
 from datetime import datetime
 
@@ -29,7 +28,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 async def get_current_user(
         token: Annotated[str, Depends(oauth2_scheme)],
         db: Session = Depends(get_db)
-) -> Users:
+) -> Type[Users]:
     """
     Получение текущего пользователя из JWT токена.
 
@@ -65,7 +64,7 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = db.query(Users).filter(Users.username == username).first()
+    user = db.query(Users).filter(Users.username.ilike(username)).first()
     if user is None:
         raise credentials_exception
     return user
@@ -87,20 +86,20 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         HTTPException: Если email или username уже заняты
     """
     db_user = db.query(Users).filter(
-        Users.username == user.username
+        Users.username.ilike(user.username)
     ).first()
     if db_user:
         raise HTTPException(status_code=400,
                             detail="Username already registered")
 
     db_user = db.query(Users).filter(
-        Users.email == user.email
+        Users.email.ilike(user.email)
     ).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     db_user = db.query(Users).filter(
-        Users.phone == user.phone
+        Users.phone.ilike(user.phone)
     ).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Phone already registered")
@@ -199,7 +198,7 @@ async def logout(
         )
         exp = payload.get("exp")
         if exp:
-            expires = exp - int(datetime.utcnow().timestamp())
+            expires = exp - int(datetime.now().timestamp())
             if expires > 0:
                 blacklist_token(token, expires)
                 logger.info(
