@@ -1,6 +1,16 @@
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    db = PgSingleton()
+    async with db.session as session:
+        yield session
 
 
 class PgSingleton:

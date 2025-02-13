@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 from datetime import datetime
-from app.models.base_model import Base, BaseModel
+from app.models.base_model import Base
 from sqlalchemy import (
     Integer,
     String,
@@ -19,7 +19,7 @@ from sqlalchemy.orm import (
 )
 
 
-class Users(BaseModel):
+class Users(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(
