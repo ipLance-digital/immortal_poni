@@ -48,7 +48,6 @@
 
 python .\app\scripts\safe_migrate.py
 
-
 ### Базы данных
 
 Асинхронное подключение к базе данных.
@@ -59,5 +58,4 @@ app.database.py
 
 ```python
 from app.database import PgSingleton
-
 ```

@@ -1,75 +1,92 @@
 """
-Скрипт для безопасного выполнения миграций с бэкапом.
+Скрипт для безопасного выполнения миграций с автоматическим откатом и повторным применением.
 """
 
 import subprocess
 import os
-from datetime import datetime
 import sys
+import logging
 from dotenv import load_dotenv
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 
-def create_backup(db_url: str, backup_dir: str = "backups") -> str:
-    """Создает бэкап базы данных"""
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_file = f"{backup_dir}/backup_{timestamp}.sql"
-
-    print(f"Creating backup: {backup_file}")
-    subprocess.run(["pg_dump", db_url, "-f", backup_file], check=True)
-
-    return backup_file
-
-
 def run_migrations(alembic_ini: str = "app/alembic.ini"):
-    """Запускает миграции"""
-    print("Generating migration...")
-    subprocess.run(
-        [
-            "alembic",
-            "-c",
-            alembic_ini,
-            "revision",
-            "--autogenerate",
-            "-m",
-            "auto migration",
-        ],
-        check=True,
-    )
+    """
+        Запускает миграции с автоматическим откатом и повторным применением
+    """
+    if not os.path.exists(alembic_ini):
+        logger.error(f"Файл {alembic_ini} не найден.")
+        sys.exit(1)
 
-    print("\nMigration SQL preview:")
-    subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head", "--sql"])
+    logger.info("Генерация миграции...")
+    try:
+        subprocess.run(
+            [
+                "alembic",
+                "-c",
+                alembic_ini,
+                "revision",
+                "--autogenerate",
+                "-m",
+                "auto migration",
+            ],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Ошибка при генерации миграции: {e}")
+        sys.exit(1)
 
-    confirm = input("\nApply migration? [y/N]: ")
-    if confirm.lower() != "y":
-        print("Migration cancelled")
+    logger.info("\nПредварительный просмотр SQL миграции:")
+    try:
+        # Просмотр SQL миграции
+        subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head", "--sql"], check=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Ошибка при просмотре SQL миграции: {e}")
+        sys.exit(1)
+
+    confirm = input("\nПрименить миграцию? [y/N]: ").strip().lower()
+    if confirm not in ("y", "yes"):
+        logger.info("Миграция отменена.")
         return
 
-    print("\nApplying migration...")
-    subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head"], check=True)
+    logger.info("\nПрименение миграции...")
+    try:
+        subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head"], check=True)
+        logger.info("Миграция успешно применена!")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Ошибка при применении миграции: {e}")
+        logger.info("Попытка отката и повторного применения миграции...")
+
+        try:
+            # Откат до последней стабильной версии
+            logger.info("Откат миграции...")
+            subprocess.run(["alembic", "-c", alembic_ini, "downgrade", "base"], check=True)
+
+            # Повторное применение миграции
+            logger.info("Повторное применение миграции...")
+            subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head"], check=True)
+            logger.info("Миграция успешно применена после отката!")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Ошибка при откате и повторном применении миграции: {e}")
+            sys.exit(1)
 
 
 def main():
     try:
         db_url = os.getenv("DATABASE_URL")
         if not db_url:
-            raise ValueError("DATABASE_URL not found in environment")
+            raise ValueError("Переменная окружения DATABASE_URL не найдена.")
 
-        # Создаем бэкап
-        # backup_file = create_backup(db_url)
-        # print(f"Backup created: {backup_file}")
-
-        # Запускаем миграции
+        logger.info(f"Используется база данных: {db_url}")
         run_migrations()
 
-        print("\nMigration completed successfully!")
-
     except Exception as e:
-        print(f"\nError: {e}")
+        logger.error(f"Ошибка: {e}")
         sys.exit(1)
 
 

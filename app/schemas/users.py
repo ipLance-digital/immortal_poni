@@ -30,13 +30,14 @@ class UserCreate(UserBase):
         email (EmailStr): Email пользователя
         username (str): Имя пользователя
         password (str): Пароль (минимум 8 символов)
+        phone (int): Номер телефона
+        telegram_id (str): ID телеграмма    
     """
 
-    email: EmailStr = Field(..., example="user@example.com")
-    username: str = Field(..., example="johndoe")
-    password: str = Field(..., min_length=8, example="strongpass123")
-    phone: int = Field(..., example=1234567890)
-    telegram_id: str = Field(..., example="1234567890")
+    email: EmailStr = Field(..., example="user@example.com", nullable=True)
+    username: str = Field(..., example="johndoe", nullable=True)
+    password: str = Field(..., min_length=8, example="strongpass123", nullable=True)
+    phone: str = Field(..., example="1234567890", nullable=True)
 
 
 class UserUpdate(BaseModel):
@@ -63,8 +64,6 @@ class UserResponse(UserBase):
 
     Attributes:
         id (UUID): Уникальный идентификатор
-        email (EmailStr): Email пользователя
-        username (str): Имя пользователя
         created_at (datetime): Дата и время создания
     """
 
