@@ -1,8 +1,3 @@
-"""
-Модуль схем пользователя.
-Содержит Pydantic модели для валидации данных пользователя.
-"""
-
 from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
 from datetime import datetime
@@ -11,11 +6,7 @@ from typing import Optional
 
 class UserBase(BaseModel):
     """
-    Базовая схема пользователя.
-
-    Attributes:
-        email (EmailStr): Email пользователя
-        username (str): Имя пользователя
+        Базовая схема пользователя.
     """
 
     email: EmailStr
@@ -24,14 +15,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """
-    Схема создания пользователя.
-
-    Attributes:
-        email (EmailStr): Email пользователя
-        username (str): Имя пользователя
-        password (str): Пароль (минимум 8 символов)
-        phone (int): Номер телефона
-        telegram_id (str): ID телеграмма    
+        Схема создания пользователя.
     """
 
     email: EmailStr = Field(..., example="user@example.com", nullable=True)
@@ -42,29 +26,19 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """
-    Схема обновления пользователя.
-    Все поля опциональны.
-
-    Attributes:
-        email (EmailStr, optional): Новый email
-        username (str, optional): Новое имя пользователя
-        password (str, optional): Новый пароль
-        is_active (bool, optional): Статус активности
+        Схема обновления пользователя.
+        Все поля опциональны.
     """
 
     email: Optional[EmailStr] = None
     username: Optional[str] = None
     password: Optional[str] = None
-    is_active: Optional[bool] = None
+    is_superuser: Optional[bool] = None
 
 
 class UserResponse(UserBase):
     """
-    Схема ответа с данными пользователя.
-
-    Attributes:
-        id (UUID): Уникальный идентификатор
-        created_at (datetime): Дата и время создания
+        Схема ответа с данными пользователя.
     """
 
     id: UUID
@@ -76,11 +50,7 @@ class UserResponse(UserBase):
 
 class UserList(BaseModel):
     """
-    Схема списка пользователей.
-
-    Attributes:
-        total (int): Общее количество пользователей
-        items (list[UserResponse]): Список пользователей
+        Схема списка пользователей.
     """
 
     total: int
