@@ -47,3 +47,15 @@
 - Создать новую миграцию
 
 python .\app\scripts\safe_migrate.py
+
+### Базы данных
+
+Асинхронное подключение к базе данных.
+Модуль инициализации базы данных:
+app.database.py
+
+Пример использования:
+
+```python
+from app.database import PgSingleton
+```

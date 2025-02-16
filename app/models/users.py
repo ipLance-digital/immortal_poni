@@ -33,7 +33,7 @@ class Users(Base):
         DateTime, nullable=False, server_default=func.now()
     )
     phone: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    telegram_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    telegram_id: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     last_activity: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     is_verified: Mapped[bool] = mapped_column(
         Boolean, server_default=expression.false()
@@ -50,7 +50,7 @@ class Users(Base):
     reviews: Mapped[List["Review"]] = relationship(
         "Review", secondary="user_reviews_connector", back_populates="users"
     )
-
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
 
 class UserSkills(Base):
     __tablename__ = "user_skills"
