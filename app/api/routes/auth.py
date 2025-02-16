@@ -7,16 +7,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from sqlalchemy.orm import Session
 from sqlalchemy import func
 import os
 from datetime import datetime
-from starlette.responses import JSONResponse
 from app.models.users import Users
 from app.schemas.users import UserCreate, UserResponse
 from app.core.security import (
     verify_password,
-    get_password_hash,  
+    get_password_hash,
     create_access_token,
     blacklist_token,
     is_token_blacklisted,
@@ -24,18 +22,15 @@ from app.core.security import (
 from sqlalchemy.future import select
 from app.schemas.auth import Token
 from app.core.logger import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import PgSingleton  # Импортируем PgSingleton
 
 router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
-# Создаем экземпляр PgSingleton
-pg_singleton = PgSingleton()
 
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], 
+    token: Annotated[str, Depends(oauth2_scheme)],
 ) -> Users:
     """
     Получение текущего пользователя из JWT токена.
@@ -63,9 +58,9 @@ async def get_current_user(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Используем PgSingleton для получения сессии
-    async with pg_singleton.session as db:
+    async with PgSingleton().session as db:
         user = await db.execute(select(Users).where(Users.username.ilike(username)))
         user = user.scalars().first()
         if user is None:
@@ -79,12 +74,12 @@ async def get_current_user(
 
 @router.post("/register", response_model=UserResponse)
 async def register_user(
-    user: UserCreate,   
+    user: UserCreate,
 ):
     """
     Регистрация нового пользователя.
     """
-    async with pg_singleton.session as db:
+    async with PgSingleton().session as db:
         result = await db.execute(select(Users).where(Users.username == user.username))
         db_user = result.scalars().first()
         if db_user:
@@ -117,8 +112,12 @@ async def login(
     """
     Авторизация пользователя.
     """
-    async with pg_singleton.session as db:
-        result = await db.execute(select(Users).where(func.lower(Users.username) == func.lower(form_data.username)))
+    async with PgSingleton().session as db:
+        result = await db.execute(
+            select(Users).where(
+                func.lower(Users.username) == func.lower(form_data.username)
+            )
+        )
         user = result.scalars().first()
         if not user:
             logger.warning(f"Failed login attempt: user {form_data.username} not found")
@@ -128,7 +127,9 @@ async def login(
                 headers={"WWW-Authenticate": "Bearer"},
             )
         if not verify_password(form_data.password, user.hashed_password):
-            logger.warning(f"Failed login attempt: incorrect password for user {form_data.username}")
+            logger.warning(
+                f"Failed login attempt: incorrect password for user {form_data.username}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -146,7 +147,7 @@ async def read_users_me(current_user: Annotated[Users, Depends(get_current_user)
     """
     if not current_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     logger.info(f"User {current_user.username} requested their data.")
     return current_user
 
@@ -161,8 +162,7 @@ async def logout(
     """
     try:
         payload = jwt.decode(
-            token, os.getenv("SECRET_KEY"),
-            algorithms=[os.getenv("ALGORITHM")]
+            token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")]
         )
         exp = payload.get("exp")
         if exp:
