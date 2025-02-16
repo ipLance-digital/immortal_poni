@@ -7,12 +7,6 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    db = PgSingleton()
-    async with db.session as session:
-        yield session
-
-
 class PgSingleton:
     """
     Пример использования атрибутов класса, если нужно соединение с базой или контекст
