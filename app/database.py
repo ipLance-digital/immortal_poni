@@ -1,11 +1,7 @@
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
-
-
-def get_db():
-    "Убери меня, я не хочу жить, я нужна для совместимости с синхронной авторизацией. И ее тоже убери"
-    pass
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class PgSingleton:

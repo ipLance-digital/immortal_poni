@@ -55,6 +55,7 @@ class Users(Base):
     )
     orders: Mapped[list["Order"]] = relationship("Order", back_populates="user", cascade="all, delete-orphan")
 
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
 
 class UserSkills(Base):
     __tablename__ = "user_skills"
