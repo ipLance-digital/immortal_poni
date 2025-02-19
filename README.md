@@ -1,10 +1,10 @@
 # immortal_poni
 
-## Description
+## Описание
 
 Фриланс платформа
 
-## Technologies
+## Технологии
 
 - FastAPI
 - SQLAlchemy
@@ -54,8 +54,4 @@ python .\app\scripts\safe_migrate.py
 Модуль инициализации базы данных:
 app.database.py
 
-Пример использования:
 
-```python
-from app.database import PgSingleton
-```
