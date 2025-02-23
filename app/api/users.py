@@ -1,12 +1,10 @@
-from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.users import Users
 from app.schemas.users import UserCreate, UserUpdate, UserResponse, UserList
 from app.core.security import get_password_hash
-from app.api.routes.auth import get_current_user
+from app.api.auth import get_current_user
 from typing import Dict
 from app.database import PgSingleton  # Импортируем PgSingleton
 

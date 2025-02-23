@@ -4,7 +4,7 @@
 """
 
 from fastapi import APIRouter
-from app.api.routes import users, auth
+from app.api import users, auth
 
 
 def get_router() -> APIRouter:
