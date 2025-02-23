@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from app.models.base_model import Base
 from app.models.users import Users
-
+from app.models.orders import Order
 load_dotenv()
 
 config = context.config
