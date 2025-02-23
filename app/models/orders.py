@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from app.models.base_model import Base
-from app.models.users import Users
 from sqlalchemy import (
     Integer,
     String,
@@ -15,10 +14,6 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.models.users import Users
 
 
 class Order(Base):
@@ -27,26 +22,31 @@ class Order(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), default=uuid.uuid4, primary_key=True
     )
-    name: Mapped[str] = mapped_column(String(100), unique=False, nullable=False)
-    body: Mapped[str] = mapped_column(String, unique=False, nullable=False)
-    price: Mapped[int] = mapped_column(Integer, unique=False, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    body: Mapped[str] = mapped_column(String, nullable=False)
+    price: Mapped[int] = mapped_column(Integer, nullable=False)
     created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, unique=False, nullable=False, server_default=func.now()
-    )
-    status_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("order_statuses.id"), unique=False, nullable=False
     )
     assign_to: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
-    deadline: Mapped[datetime] = mapped_column(DateTime, unique=False, nullable=True)
-    attachments: Mapped[str] = mapped_column(String, unique=False, nullable=True)
+    status_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("order_statuses.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    deadline: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    attachments: Mapped[str] = mapped_column(String, nullable=True)
 
-    user: Mapped["Users"] = relationship("Users", back_populates="user")
-    status: Mapped["OrderStatus"] = relationship("OrderStatus", back_populates="status")
+    creator = relationship(
+        "Users", back_populates="orders_created", foreign_keys=[created_by]
+    )
+    assignee = relationship(
+        "Users", back_populates="orders_assigned", foreign_keys=[assign_to]
+    )
+    status = relationship("OrderStatus", back_populates="orders")
 
 
 class OrderStatus(Base):
@@ -54,3 +54,5 @@ class OrderStatus(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
+
+    orders = relationship("Order", back_populates="status")

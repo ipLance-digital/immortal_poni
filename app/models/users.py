@@ -9,17 +9,30 @@ from sqlalchemy import (
     ForeignKey,
     DateTime,
     func,
+    Table,
+    Column,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import expression
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
     relationship,
 )
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from app.models.orders import Order
+
+
+user_skills_connector = Table(
+    "user_skills_connector",
+    Base.metadata,
+    Column("user_id", UUID, ForeignKey("users.id"), primary_key=True),
+    Column("skill_id", Integer, ForeignKey("user_skills.id"), primary_key=True),
+)
+
+user_review_connector = Table(
+    "user_review_connector",
+    Base.metadata,
+    Column("user_id", UUID, ForeignKey("users.id"), primary_key=True),
+    Column("review_id", Integer, ForeignKey("reviews.id"), primary_key=True),
+)
 
 
 class Users(Base):
@@ -38,24 +51,22 @@ class Users(Base):
     phone: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     telegram_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     last_activity: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    is_verified: Mapped[bool] = mapped_column(
-        Boolean, server_default=expression.false()
-    )
-    skill_connectors: Mapped[List["UserSkillConnector"]] = relationship(
-        "UserSkillConnector", back_populates="user"
-    )
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+
     skills: Mapped[List["UserSkills"]] = relationship(
-        "UserSkills", secondary="user_skills_connector", back_populates="users"
-    )
-    review_connectors: Mapped[List["UserReviewConnector"]] = relationship(
-        "UserReviewConnector", back_populates="user", cascade="all, delete-orphan"
+        "UserSkills", secondary=user_skills_connector, back_populates="users"
     )
     reviews: Mapped[List["Review"]] = relationship(
-        "Review", secondary="user_reviews_connector", back_populates="users"
+        "Review", secondary=user_review_connector, back_populates="users"
     )
-    orders: Mapped[list["Order"]] = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    orders_created = relationship(
+        "Order", foreign_keys="Order.created_by", back_populates="creator"
+    )
+    orders_assigned = relationship(
+        "Order", foreign_keys="Order.assign_to", back_populates="assignee"
+    )
 
-    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
 
 class UserSkills(Base):
     __tablename__ = "user_skills"
@@ -65,24 +76,9 @@ class UserSkills(Base):
 
     users: Mapped[List["Users"]] = relationship(
         "Users",
-        secondary="user_skills_connector",
+        secondary=user_skills_connector,
         back_populates="skills",
     )
-
-
-class UserSkillConnector(Base):
-    __tablename__ = "user_skills_connector"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    skill_id: Mapped[int] = mapped_column(
-        ForeignKey("user_skills.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-
-    user: Mapped["Users"] = relationship("Users", back_populates="skill_connectors")
-    skill: Mapped["UserSkills"] = relationship("UserSkills")
 
 
 class Review(Base):
@@ -96,20 +92,8 @@ class Review(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     users: Mapped[List["Users"]] = relationship(
-        "Users", secondary="user_reviews_connector", back_populates="reviews"
+        "Users", secondary=user_review_connector, back_populates="reviews"
     )
 
 
-class UserReviewConnector(Base):
-    __tablename__ = "user_reviews_connector"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    review_id: Mapped[int] = mapped_column(
-        ForeignKey("reviews.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-
-    user: Mapped["Users"] = relationship("Users", back_populates="review_connectors")
-    review: Mapped["Review"] = relationship("Review")
+from app.models.orders import Order
