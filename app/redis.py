@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 import redis.asyncio as redis
 import os
+import asyncio
 
 
 class RedisSingleton:
@@ -40,7 +41,6 @@ async def get_redis():
     await redis_instance.init_redis()
     return redis_instance.redis_client
 
-import asyncio
 
 async def test_redis():
     try:
