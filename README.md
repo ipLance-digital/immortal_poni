@@ -54,4 +54,10 @@ python .\app\scripts\safe_migrate.py
 Модуль инициализации базы данных:
 app.database.py
 
+### Redis
 
+Для мониторинга redis есть ПО:
+
+sudo apt update
+sudo apt install snapd
+sudo snap install redisinsight
