@@ -6,7 +6,7 @@
 from fastapi import FastAPI
 import uvicorn
 from app.database import PgSingleton
-from app.redis import get_redis
+from app.redis import RedisSingleton
 from app.routers import get_router
 from app.core.config import settings
 from contextlib import asynccontextmanager
@@ -29,8 +29,8 @@ async def lifespan(app: FastAPI):
         logger.error(f"Ошибка подключения к БД: {e}")
 
     try:
-        redis = await get_redis()
-        await redis.ping()
+        redis = await RedisSingleton().init_redis()
+        await RedisSingleton().redis_client.ping()
         logger.info("Redis подключён")
     except Exception as e:
         logger.error(f"Ошибка подключения к Redis: {e}")
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     yield
 
     await db.close_connections() 
-    redis = await get_redis()  
+    redis = await RedisSingleton().init_redis()
     await redis.close()
     logger.info("Моя остановочкаааа")
 

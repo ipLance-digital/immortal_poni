@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 import os
-from app.redis import get_redis
+from app.redis import RedisSingleton
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -25,18 +25,18 @@ def create_access_token(data: dict):
 
 async def blacklist_token(token: str, expires: int):
     try:
-        client = await get_redis() 
+        client = await RedisSingleton().init_redis()
         if client is None:
             raise Exception("Redis client is not initialized")
-        await client.setex(token, expires, "blacklisted") 
+        await client.setex(token, expires, "blacklisted")
     except Exception as e:
-        raise
+        raise e
 
 
 async def is_token_blacklisted(token: str) -> bool:
     """
     Проверяет, находится ли токен в черном списке в Redis.
     """
-    redis_client = await get_redis()  
+    redis_client = await RedisSingleton().init_redis
     return await redis_client.exists(token) == 1  
 
