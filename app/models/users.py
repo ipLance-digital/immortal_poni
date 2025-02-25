@@ -94,3 +94,6 @@ class Review(Base):
     users: Mapped[List["Users"]] = relationship(
         "Users", secondary=user_review_connector, back_populates="reviews"
     )
+
+
+from app.models.orders import Order
