@@ -11,7 +11,10 @@ from sqlalchemy import func
 import os
 from datetime import datetime
 from app.models.users import Users
-from app.schemas.users import UserCreate, UserResponse
+from app.schemas.users import (
+    UserResponse, 
+    UserCreate,
+)
 from app.core.security import (
     verify_password,
     get_password_hash,
@@ -22,12 +25,11 @@ from app.core.security import (
 from sqlalchemy.future import select
 from app.schemas.auth import Token
 from app.core.logger import logger
-from app.database import PgSingleton  # Импортируем PgSingleton
+from app.database import PgSingleton
 
 router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
-
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
@@ -71,7 +73,6 @@ async def get_current_user(
             )
         return user
 
-
 @router.post("/register", response_model=UserResponse)
 async def register_user(
     user: UserCreate,
@@ -103,7 +104,6 @@ async def register_user(
         await db.commit()
         await db.refresh(db_user)
         return db_user
-
 
 @router.post("/login", response_model=Token)
 async def login(
@@ -139,7 +139,6 @@ async def login(
         access_token = create_access_token(data={"sub": user.username})
         return {"access_token": access_token, "token_type": "bearer"}
 
-
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(current_user: Annotated[Users, Depends(get_current_user)]):
     """
@@ -150,7 +149,6 @@ async def read_users_me(current_user: Annotated[Users, Depends(get_current_user)
 
     logger.info(f"User {current_user.username} requested their data.")
     return current_user
-
 
 @router.post("/logout")
 async def logout(
@@ -166,7 +164,7 @@ async def logout(
         )
         exp = payload.get("exp")
         if exp:
-            expires = exp - int(datetime.now().timestamp())
+            expires = int(exp - datetime.utcnow().timestamp())
             if expires > 0:
                 blacklist_token(token, expires)
                 logger.info(f"User {current_user.username} logged out successfully")

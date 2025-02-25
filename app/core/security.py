@@ -2,25 +2,20 @@ from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 import os
+from app.redis import get_redis
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# TODO: Подключить Redis для хранения blacklist
-token_blacklist = set()
-
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
-
 def get_password_hash(password):
     return pwd_context.hash(password)
-
 
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(
-        minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+        minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 300))
     )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
@@ -28,12 +23,17 @@ def create_access_token(data: dict):
     )
     return encoded_jwt
 
-
 def blacklist_token(token: str, expires: int):
-    """Добавляем токен в черный список"""
-    token_blacklist.add(token)
-
+    """
+    Добавляет токен в черный список в Redis с указанным TTL (в секундах).
+    """
+    try:
+        get_redis.redis_client.setex(token, expires, "blacklisted")
+    except Exception as e:
+        raise Exception(f"Ошибка добавления токена в blacklist: {e}")
 
 def is_token_blacklisted(token: str) -> bool:
-    """Проверяем, находится ли токен в черном списке"""
-    return token in token_blacklist
+    """
+    Проверяет, находится ли токен в черном списке в Redis.
+    """
+    return get_redis.redis_client.exists(token) == 1
