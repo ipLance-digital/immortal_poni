@@ -25,7 +25,7 @@ def create_access_token(data: dict):
 
 async def blacklist_token(token: str, expires: int):
     try:
-        client = await RedisSingleton().init_redis()
+        client = await RedisSingleton().redis_client
         if client is None:
             raise Exception("Redis client is not initialized")
         await client.setex(token, expires, "blacklisted")
@@ -37,6 +37,6 @@ async def is_token_blacklisted(token: str) -> bool:
     """
     Проверяет, находится ли токен в черном списке в Redis.
     """
-    redis_client = await RedisSingleton().init_redis
+    redis_client = await RedisSingleton().redis_client
     return await redis_client.exists(token) == 1  
 
