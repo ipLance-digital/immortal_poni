@@ -30,10 +30,7 @@ class UserUpdate(BaseModel):
         Все поля опциональны.
     """
 
-    email: Optional[EmailStr] = None
-    username: Optional[str] = None
     password: Optional[str] = None
-    is_superuser: Optional[bool] = None
 
 
 class UserResponse(UserBase):
@@ -55,3 +52,10 @@ class UserList(BaseModel):
 
     total: int
     items: list[UserResponse]
+
+
+class ChangePasswordRequest(BaseModel):
+    """
+        Смена пароля.
+    """
+    new_pass: str = Field(..., min_length=8, example="strongpass123", nullable=True)

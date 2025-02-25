@@ -139,7 +139,9 @@ async def login(
         return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)
-async def read_users_me(current_user: Annotated[Users, Depends(get_current_user)]):
+async def read_users_me(
+        current_user: Annotated[Users, Depends(get_current_user)]
+    ):
     """
     Получение данных текущего пользователя.
     """
