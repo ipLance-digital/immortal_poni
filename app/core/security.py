@@ -23,17 +23,20 @@ def create_access_token(data: dict):
     )
     return encoded_jwt
 
-def blacklist_token(token: str, expires: int):
-    """
-    Добавляет токен в черный список в Redis с указанным TTL (в секундах).
-    """
+async def blacklist_token(token: str, expires: int):
     try:
-        get_redis.redis_client.setex(token, expires, "blacklisted")
+        client = await get_redis()  # добавляем await, чтобы получить Redis клиент
+        if client is None:
+            raise Exception("Redis client is not initialized")
+        await client.setex(token, expires, "blacklisted")  # используем await для асинхронной операции
     except Exception as e:
-        raise Exception(f"Ошибка добавления токена в blacklist: {e}")
+        raise
 
-def is_token_blacklisted(token: str) -> bool:
+
+async def is_token_blacklisted(token: str) -> bool:
     """
     Проверяет, находится ли токен в черном списке в Redis.
     """
-    return get_redis.redis_client.exists(token) == 1
+    redis_client = await get_redis()  
+    return await redis_client.exists(token) == 1  
+

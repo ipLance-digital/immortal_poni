@@ -37,7 +37,7 @@ async def get_current_user(
     """
     Получение текущего пользователя из JWT токена.
     """
-    if is_token_blacklisted(token):
+    if await is_token_blacklisted(token): 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked",
@@ -61,7 +61,6 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Используем PgSingleton для получения сессии
     async with PgSingleton().session as db:
         user = await db.execute(select(Users).where(Users.username.ilike(username)))
         user = user.scalars().first()
@@ -166,7 +165,7 @@ async def logout(
         if exp:
             expires = int(exp - datetime.utcnow().timestamp())
             if expires > 0:
-                blacklist_token(token, expires)
+                await blacklist_token(token, expires)  
                 logger.info(f"User {current_user.username} logged out successfully")
                 return {"message": "Successfully logged out"}
     except JWTError:
