@@ -25,10 +25,10 @@ def create_access_token(data: dict):
 
 async def blacklist_token(token: str, expires: int):
     try:
-        client = await get_redis()  # добавляем await, чтобы получить Redis клиент
+        client = await get_redis() 
         if client is None:
             raise Exception("Redis client is not initialized")
-        await client.setex(token, expires, "blacklisted")  # используем await для асинхронной операции
+        await client.setex(token, expires, "blacklisted") 
     except Exception as e:
         raise
 
