@@ -1,11 +1,14 @@
 from datetime import datetime
+from uuid import UUID
+from uuid import uuid4
 import os
 import uuid
+
+from sqlalchemy import delete, select
 from supabase import create_client, Client
 from fastapi import HTTPException
 from typing import Optional
 from app.core.config import settings
-from uuid import uuid4
 from app.database import PgSingleton
 from app.models.files import Files
 import logging
@@ -25,7 +28,7 @@ class SupabaseStorage:
     ) -> Optional[str]:    
         with open(file_path, "rb") as file:
             file_id = str(uuid4())  
-            response = supabase.storage.from_(bucket_name).upload(file_id, file)
+            supabase.storage.from_(bucket_name).upload(file_id, file)
             file_size = os.path.getsize(file_path)
             async with PgSingleton().session as db:
                 file_record = Files(
@@ -37,56 +40,57 @@ class SupabaseStorage:
                 )
                 db.add(file_record)
                 await db.commit()
-        logging.info(f"Ответ от Supabase: {response}")
-        if isinstance(response, dict) and response.get("error") is None:
-            return f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_name}"
-        
+        return file_id
 
     @staticmethod
-    async def delete_file(file_name: str) -> bool:
+    async def delete_file(file_uuid: UUID, user_id: UUID):
         """
-        Удаляет файл из Supabase Storage.
-        
-        Args:
-            file_name: Имя файла в хранилище.
-
-        Returns:
-            bool: True, если удаление успешно, иначе False.
+        Удаляет файл из Supabase Storage и базы данных.
         """
         try:
-            response = supabase.storage.from_(bucket_name).remove([file_name])
-            return response.get("status", 400) == 200
-        except Exception:
+            async with PgSingleton().session as db:
+                file_record = await db.execute(
+                    select(Files).where(Files.id == file_uuid, Files.created_by == user_id)
+                )
+                file_record = file_record.scalars().first()
+                if not file_record:
+                    return False
+
+                supabase.storage.from_(bucket_name).remove([str(file_uuid)])
+                stmt = delete(Files).where(Files.id == file_uuid)
+                await db.execute(stmt)
+                await db.commit()
+
+        except Exception as e:
+            logging.error(f"Ошибка при удалении файла: {e}")
             return False
 
-    @staticmethod
-    async def rename_file(old_name: str, new_name: str) -> Optional[str]:
-        """
-        Переименовывает файл в Supabase Storage (копирует и удаляет старый).
-        
-        Args:
-            old_name: Текушее имя файла.
-            new_name: Новое имя файла.
 
-        Returns:
-            str: Публичная ссылка на переименованный файл или None, если ошибка.
+    @staticmethod
+    async def rename_file(
+            file_uuid: UUID,
+            user_id: UUID,
+            new_name: str
+    ) -> Optional[str]:
+        """
+            Переименовывает файл
         """
         try:
-            # Скачиваем данные файла
-            file_data = supabase.storage.from_(bucket_name).download(old_name)
-            if not file_data:
-                raise HTTPException(status_code=404, detail="Файл не найден")
+            async with PgSingleton().session as db:
+                file_record = await db.execute(
+                    select(Files).where(Files.id == file_uuid, Files.created_by == user_id)
+                )
+                file_record = file_record.scalars().first()
+                if not file_record:
+                    raise HTTPException(status_code=404, detail="Файл не найден")
+                file_record.file_name = new_name
+                db.add(file_record)
+                await db.commit()
+                await db.refresh(file_record)
+                return new_name
 
-            # Загружаем файл с новым именем
-            response = supabase.storage.from_(bucket_name).upload(new_name, file_data)
-            if response.get("status", 400) != 200:
-                raise HTTPException(status_code=500, detail="Ошибка переименования файла")
-
-            # Удаляем старый файл
-            await SupabaseStorage.delete_file(old_name)
-            return f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{new_name}"
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-
-supabase_storage = SupabaseStorage()
