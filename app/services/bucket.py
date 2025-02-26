@@ -1,10 +1,10 @@
 from datetime import datetime
+import os
 import uuid
 from supabase import create_client, Client
 from fastapi import HTTPException
 from typing import Optional
 from app.core.config import settings
-from pathlib import Path
 from uuid import uuid4
 import logging
 
@@ -21,10 +21,12 @@ class SupabaseStorage:
         file_id = str(uuid4())  
         with open(file_path, "rb") as file:
             response = supabase.storage.from_(BUCKET_NAME).upload(file_id, file)
+            file_size = os.path.getsize(file_path)
             async with PgSingleton().session as db:
                 file_record = Files(
                     id=uuid.UUID(file_id),
                     file_name=file_name,
+                    file_size=file_size,
                     created_by=user_id,
                     created_at=datetime.now()
                 )
