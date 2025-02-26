@@ -54,8 +54,8 @@ class UserList(BaseModel):
     items: list[UserResponse]
 
 
-class ChangePasswordRequest(BaseModel):
+class ChangeDataRequest(BaseModel):
     """
         Смена пароля.
     """
-    new_pass: str = Field(..., min_length=8, example="strongpass123", nullable=True)
+    new_password: str = Field(..., min_length=8, example="strongpass123", nullable=True)
