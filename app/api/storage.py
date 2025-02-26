@@ -3,9 +3,13 @@
 Содержит эндпоинты для загрузки, удаления и переименования файлов.
 """
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Path, status
+from fastapi import (
+    APIRouter,
+    HTTPException, 
+    UploadFile, 
+    File
+)
 import tempfile
-import os
 import logging
 from app.services.bucket import SupabaseStorage
 
@@ -14,19 +18,19 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.filename.split('.')[-1] if '.' in file.filename else 'tmp'}") as tmp:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=f".{file.filename.split('.')[-1] if '.' in file.filename else 'tmp'}"
+        ) as tmp:
             content = await file.read()
             tmp.write(content)
             tmp_path = tmp.name
+        
         file_name = file.filename
-        await SupabaseStorage.upload_file(tmp_path, file_name)
-        os.unlink(tmp_path)
-        logger.info(f"Файл {file_name} успешно загружен")
-    
+        await SupabaseStorage.upload_file(tmp_path, file_name)        
+        return {'Succesful file added'}
     except HTTPException as e:
         logger.error(f"Ошибка загрузки файла {file_name}: {str(e)}")
         raise

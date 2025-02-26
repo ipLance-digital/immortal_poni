@@ -3,39 +3,23 @@ from fastapi import HTTPException
 from typing import Optional
 from app.core.config import settings
 from pathlib import Path
-
+import logging
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 BUCKET_NAME = settings.BUCKET_NAME
 
 class SupabaseStorage:
     @staticmethod
     async def upload_file(file_path: str, file_name: str) -> Optional[str]:
-        """
-        Загружает файл в Supabase Storage и возвращает публичную ссылку.
-        
-        Args:
-            file_path: Путь к файлу на локальном диске.
-            file_name: Имя файла в хранилище.
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise HTTPException(status_code=400, detail="Файл не найден")
 
-        Returns:
-            str: Публичная ссылка на файл или None, если ошибка.
+        with open(file_path, "rb") as file:
+            response = supabase.storage.from_(BUCKET_NAME).upload(file_name, file)
+        logging.info(f"Ответ от Supabase: {response}")
+        if isinstance(response, dict) and response.get("error") is None:
+            return f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{file_name}"
         
-        Raises:
-            HTTPException: Если файл не найден или загрузка не удалась.
-        """
-        try:
-            file_path = Path(file_path)
-            if not file_path.exists():
-                raise HTTPException(status_code=400, detail="Файл не найден")
-
-            with open(file_path, "rb") as file:
-                response = supabase.storage.from_(BUCKET_NAME).upload(file_name, file)
-            
-            if response.get("status", 400) == 200:
-                return f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{file_name}"
-            raise HTTPException(status_code=500, detail="Ошибка загрузки файла")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
 
     @staticmethod
     async def delete_file(file_name: str) -> bool:
