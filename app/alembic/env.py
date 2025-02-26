@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from app.models.base_model import Base
 from app.models.users import Users
 from app.models.orders import Order
+from app.models.files import Files
+
 load_dotenv()
 
 config = context.config
