@@ -17,28 +17,19 @@ BUCKET_NAME = settings.BUCKET_NAME
 
 class SupabaseStorage:
     @staticmethod
-    async def upload_file(file_path: str, file_name: str) -> Optional[str]:
-        file_path = Path(file_path)
-        if not file_path.exists():
-            raise HTTPException(status_code=400, detail="Файл не найден")
-        
+    async def upload_file(file_path: str, file_name: str, user_id: uuid.UUID) -> Optional[str]:    
+        file_id = str(uuid4())  
         with open(file_path, "rb") as file:
-            response = supabase.storage.from_(BUCKET_NAME).upload(file_name, file)
-        if response.get("status", 400) == 200:
-                public_url = f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{unique_file_name}"
-                file_id = str(uuid4())  
-                file_extension = file_path.suffix or ".tmp"
-                unique_file_name = f"{uuid4()}{file_extension}"
-                async with PgSingleton().session as session:
-                    file_record = Files(
-                        id=uuid.UUID(file_id),
-                        file_name=unique_file_name,
-                        public_url=public_url,
-                        original_name=file_name,
-                        created_at=datetime.now()
-                    )
-                    session.add(file_record)
-                    await session.commit()
+            response = supabase.storage.from_(BUCKET_NAME).upload(file_id, file)
+            async with PgSingleton().session as db:
+                file_record = Files(
+                    id=uuid.UUID(file_id),
+                    file_name=file_name,
+                    created_by=user_id,
+                    created_at=datetime.now()
+                )
+                db.add(file_record)
+                await db.commit()
         logging.info(f"Ответ от Supabase: {response}")
         if isinstance(response, dict) and response.get("error") is None:
             return f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{file_name}"

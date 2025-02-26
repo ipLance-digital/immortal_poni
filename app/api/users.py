@@ -6,7 +6,7 @@ from app.schemas.users import UserCreate, UserUpdate, UserResponse, UserList
 from app.core.security import get_password_hash
 from app.api.auth import get_current_user
 from typing import Dict
-from app.database import PgSingleton  # Импортируем PgSingleton
+from app.database import PgSingleton 
 
 router = APIRouter()
 

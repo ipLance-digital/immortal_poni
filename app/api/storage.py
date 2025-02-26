@@ -1,17 +1,15 @@
-"""
-Модуль управления файлами в Supabase Storage.
-Содержит эндпоинты для загрузки, удаления и переименования файлов.
-"""
-
-from fastapi import (
-    APIRouter,
-    HTTPException, 
-    UploadFile, 
-    File
-)
 import tempfile
 import logging
+from app.api.auth import get_current_user
+from app.models.users import Users
 from app.services.bucket import SupabaseStorage
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException, 
+    UploadFile, 
+    File,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,7 +17,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(
+    file: UploadFile = File(...),
+    current_user: Users = Depends(get_current_user)
+):
     try:
         with tempfile.NamedTemporaryFile(
             delete=False, suffix=f".{file.filename.split('.')[-1] if '.' in file.filename else 'tmp'}"
@@ -27,10 +28,10 @@ async def upload_file(file: UploadFile = File(...)):
             content = await file.read()
             tmp.write(content)
             tmp_path = tmp.name
-        
+
         file_name = file.filename
-        await SupabaseStorage.upload_file(tmp_path, file_name)        
-        return {'Succesful file added'}
+        await SupabaseStorage.upload_file(tmp_path, file_name, current_user.id)        
+        return {"message": "Successful file added"}
     except HTTPException as e:
         logger.error(f"Ошибка загрузки файла {file_name}: {str(e)}")
         raise
