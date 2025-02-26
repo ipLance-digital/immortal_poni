@@ -38,8 +38,7 @@ async def lifespan(app: FastAPI):
     yield
 
     await db.close_connections() 
-    redis = await RedisSingleton().init_redis()
-    await redis.close()
+    await RedisSingleton().init_redis()
     logger.info("Моя остановочкаааа")
 
 app = FastAPI(
