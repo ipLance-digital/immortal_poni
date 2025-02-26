@@ -6,21 +6,26 @@ from fastapi import HTTPException
 from typing import Optional
 from app.core.config import settings
 from uuid import uuid4
-import logging
-
 from app.database import PgSingleton
 from app.models.files import Files
+import logging
 
-
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
-BUCKET_NAME = settings.BUCKET_NAME
+supabase: Client = create_client(
+    settings.SUPABASE_URL, 
+    settings.SUPABASE_KEY,
+)
+bucket_name = settings.BUCKET_NAME
 
 class SupabaseStorage:
     @staticmethod
-    async def upload_file(file_path: str, file_name: str, user_id: uuid.UUID) -> Optional[str]:    
-        file_id = str(uuid4())  
+    async def upload_file(
+        file_path: str, 
+        file_name: str, 
+        user_id: uuid.UUID
+    ) -> Optional[str]:    
         with open(file_path, "rb") as file:
-            response = supabase.storage.from_(BUCKET_NAME).upload(file_id, file)
+            file_id = str(uuid4())  
+            response = supabase.storage.from_(bucket_name).upload(file_id, file)
             file_size = os.path.getsize(file_path)
             async with PgSingleton().session as db:
                 file_record = Files(
@@ -34,7 +39,7 @@ class SupabaseStorage:
                 await db.commit()
         logging.info(f"Ответ от Supabase: {response}")
         if isinstance(response, dict) and response.get("error") is None:
-            return f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{file_name}"
+            return f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{file_name}"
         
 
     @staticmethod
@@ -49,7 +54,7 @@ class SupabaseStorage:
             bool: True, если удаление успешно, иначе False.
         """
         try:
-            response = supabase.storage.from_(BUCKET_NAME).remove([file_name])
+            response = supabase.storage.from_(bucket_name).remove([file_name])
             return response.get("status", 400) == 200
         except Exception:
             return False
@@ -68,18 +73,18 @@ class SupabaseStorage:
         """
         try:
             # Скачиваем данные файла
-            file_data = supabase.storage.from_(BUCKET_NAME).download(old_name)
+            file_data = supabase.storage.from_(bucket_name).download(old_name)
             if not file_data:
                 raise HTTPException(status_code=404, detail="Файл не найден")
 
             # Загружаем файл с новым именем
-            response = supabase.storage.from_(BUCKET_NAME).upload(new_name, file_data)
+            response = supabase.storage.from_(bucket_name).upload(new_name, file_data)
             if response.get("status", 400) != 200:
                 raise HTTPException(status_code=500, detail="Ошибка переименования файла")
 
             # Удаляем старый файл
             await SupabaseStorage.delete_file(old_name)
-            return f"{settings.SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{new_name}"
+            return f"{settings.SUPABASE_URL}/storage/v1/object/public/{bucket_name}/{new_name}"
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 

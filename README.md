@@ -61,3 +61,8 @@ app.database.py
 sudo apt update
 sudo apt install snapd
 sudo snap install redisinsight
+
+### Хранилище
+
+Организовано облачное хранилище на базе supabase.com вместе с бд.
+Работает через моудль supabase.

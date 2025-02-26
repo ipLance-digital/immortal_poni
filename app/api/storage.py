@@ -2,7 +2,7 @@ import tempfile
 import logging
 from app.api.auth import get_current_user
 from app.models.users import Users
-from app.services.bucket import SupabaseStorage
+from app.services.storage import SupabaseStorage
 from fastapi import (
     APIRouter,
     Depends,
@@ -23,21 +23,22 @@ async def upload_file(
 ):
     try:
         with tempfile.NamedTemporaryFile(
-            delete=False, suffix=f".{file.filename.split('.')[-1] if '.' in file.filename else 'tmp'}"
+            delete=False,
+            suffix=f".{file.filename.split('.')[-1] if '.' in file.filename else 'tmp'}"
         ) as tmp:
             content = await file.read()
             tmp.write(content)
             tmp_path = tmp.name
-
         file_name = file.filename
         await SupabaseStorage.upload_file(tmp_path, file_name, current_user.id)        
         return {"message": "Successful file added"}
     except HTTPException as e:
-        logger.error(f"Ошибка загрузки файла {file_name}: {str(e)}")
-        raise
+        raise 
     except Exception as e:
-        logger.error(f"Неизвестная ошибка при загрузке файла {file_name}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Ошибка загрузки файла: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Ошибка загрузки файла: {str(e)}"
+        )
 
 # @router.delete("/delete/{file_name}")
 # async def delete_file(file_name: str = Path(..., title="Имя файла для удаления", description="Имя файла, который нужно удалить")):
