@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Ошибка подключения к БД: {e}")
 
     try:
-        redis = await RedisSingleton().init_redis()
+        await RedisSingleton().init_redis()
         await RedisSingleton().redis_client.ping()
         logger.info("Redis подключён")
     except Exception as e:
