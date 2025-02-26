@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     DB_PASSWORD: str | None = None
     PYTHONPATH: str | None = None
 
+    # Хранилище
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL")
+    SUPABASE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY")
+    BUCKET_NAME: str = os.getenv("BUCKET_NAME")
+
     class Config:
         env_file = ".env"
         extra = "allow"

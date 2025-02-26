@@ -10,7 +10,6 @@ from app.database import PgSingleton  # Импортируем PgSingleton
 
 router = APIRouter()
 
-# Создаем экземпляр PgSingleton
 pg_singleton = PgSingleton()
 
 
