@@ -3,11 +3,10 @@ from sqlalchemy import func, select
 from uuid import UUID
 from app.models.users import Users
 from app.schemas.users import (
-    ChangePasswordRequest,
-    UserCreate, 
-    UserUpdate, 
-    UserResponse, 
-    UserList, 
+    UserCreate,
+    UserUpdate,
+    UserResponse,
+    UserList,
 )
 from app.core.security import get_password_hash
 from app.api.auth import get_current_user
@@ -24,16 +23,9 @@ async def get_users(
     skip: int = 0,
     limit: int = 10,
     current_user: Users = Depends(get_current_user),
-) -> UserList:
+):
     """
     Получение списка пользователей с пагинацией.
-
-    Args:
-        skip: Количество пропускаемых записей
-        limit: Максимальное количество возвращаемых записей
-
-    Returns:
-        UserList: Список пользователей и общее количество
     """
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -55,6 +47,7 @@ async def get_user(
     Получение данных конкретного пользователя.
 
     Args:
+        current_user: Авторизованный пользователь
         user_id: UUID пользователя
 
     Returns:
@@ -78,15 +71,6 @@ async def create_user(
 ) -> UserResponse:
     """
     Создание нового пользователя.
-
-    Args:
-        user: Данные для создания пользователя
-
-    Returns:
-        UserResponse: Данные созданного пользователя
-
-    Raises:
-        HTTPException: Если email или username уже заняты, или если у текущего пользователя нет прав
     """
     if not current_user.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
@@ -125,28 +109,19 @@ async def update_user(
 ) -> UserResponse:
     """
     Обновление данных пользователя.
-
-    Args:
-        user: Данные для обновления
-
-    Returns:
-        UserResponse: Обновленные данные пользователя
-
-    Raises:
-        HTTPException: Если пользователь не найден
     """
     async with pg_singleton.session as db:
-        db_user = current_user 
+        db_user = current_user
         if db_user is None:
             raise HTTPException(status_code=404, detail="User not found")
 
         update_data: Dict = user.model_dump(exclude_unset=True)
         if "password" in update_data:
             update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
-        
+
         for field, value in update_data.items():
             setattr(db_user, field, value)
-        
+
         db.add(db_user)
         await db.commit()
         await db.refresh(db_user)

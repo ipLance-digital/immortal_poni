@@ -1,12 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from app.core.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import Settings
 
 
 class PgSingleton:
     """
-    Пример использования атрибутов класса, если нужно соединение с базой или контекст
+    Пример использования атрибутов класса,
+    если нужно соединение с базой или контекст.
     async def test():
         a = PgSingleton()
         async with a.session as session:
@@ -25,14 +26,16 @@ class PgSingleton:
     @property
     def engine(self) -> AsyncEngine:
         if not self._engine:
-            self._engine = create_async_engine(settings.DATABASE_URL)
+            self._engine = create_async_engine(Settings().DATABASE_URL)
         return self._engine
 
     @property
     def session(self) -> AsyncSession:
         if not self._session_maker:
             self._session_maker = sessionmaker(
-                bind=self.engine, class_=AsyncSession, expire_on_commit=False
+                bind=self.engine,
+                class_=AsyncSession,
+                expire_on_commit=False,
             )
         return self._session_maker()
 
