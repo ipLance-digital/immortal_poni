@@ -72,6 +72,19 @@ async def get_current_user(
             )
         return user
 
+@router.get("/me", response_model=UserResponse)
+async def read_users_me(
+        current_user: Annotated[Users, Depends(get_current_user)]
+    ):
+    """
+    Получение данных текущего пользователя.
+    """
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    logger.info(f"User {current_user.username} requested their data.")
+    return current_user
+
 @router.post("/register", response_model=UserResponse)
 async def register_user(
     user: UserCreate,
@@ -138,16 +151,6 @@ async def login(
         access_token = create_access_token(data={"sub": user.username})
         return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me", response_model=UserResponse)
-async def read_users_me(current_user: Annotated[Users, Depends(get_current_user)]):
-    """
-    Получение данных текущего пользователя.
-    """
-    if not current_user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    logger.info(f"User {current_user.username} requested their data.")
-    return current_user
 
 @router.post("/logout")
 async def logout(
@@ -171,3 +174,4 @@ async def logout(
     except JWTError:
         logger.warning(f"Invalid token for user {current_user.username}")
     raise HTTPException(status_code=400, detail="Invalid token")
+
