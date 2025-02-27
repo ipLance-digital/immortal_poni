@@ -3,7 +3,6 @@ from sqlalchemy import func, select
 from uuid import UUID
 from app.models.users import Users
 from app.schemas.users import (
-    ChangePasswordRequest,
     UserCreate,
     UserUpdate,
     UserResponse,
@@ -24,17 +23,9 @@ async def get_users(
     skip: int = 0,
     limit: int = 10,
     current_user: Users = Depends(get_current_user),
-) -> UserList:
+):
     """
     Получение списка пользователей с пагинацией.
-
-    Args:
-        current_user: Авторизованный пользователь
-        skip: Количество пропускаемых записей
-        limit: Максимальное количество возвращаемых записей
-
-    Returns:
-        UserList: Список пользователей и общее количество
     """
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -80,16 +71,6 @@ async def create_user(
 ) -> UserResponse:
     """
     Создание нового пользователя.
-
-    Args:
-        current_user: Авторизованный пользователь
-        user: Данные для создания пользователя
-
-    Returns:
-        UserResponse: Данные созданного пользователя
-
-    Raises:
-        HTTPException: Если email или username уже заняты, или если у текущего пользователя нет прав
     """
     if not current_user.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
@@ -128,15 +109,6 @@ async def update_user(
 ) -> UserResponse:
     """
     Обновление данных пользователя.
-
-    Args:
-        user: Данные для обновления
-
-    Returns:
-        UserResponse: Обновленные данные пользователя
-
-    Raises:
-        HTTPException: Если пользователь не найден
     """
     async with pg_singleton.session as db:
         db_user = current_user
