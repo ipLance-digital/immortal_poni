@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),

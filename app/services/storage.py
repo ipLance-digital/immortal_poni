@@ -8,26 +8,27 @@ from sqlalchemy import delete, select
 from supabase import create_client, Client
 from fastapi import HTTPException
 from typing import Optional
-from app.core.config import settings
+from app.core.config import Settings
 from app.database import PgSingleton
 from app.models.files import Files
 import logging
 
 supabase: Client = create_client(
-    settings.SUPABASE_URL, 
-    settings.SUPABASE_KEY,
+    Settings().SUPABASE_URL,
+    Settings().SUPABASE_KEY,
 )
-bucket_name = settings.BUCKET_NAME
+bucket_name = Settings().BUCKET_NAME
+
 
 class SupabaseStorage:
     @staticmethod
     async def upload_file(
-        file_path: str, 
-        file_name: str, 
-        user_id: uuid.UUID
-    ) -> Optional[str]:    
+            file_path: str,
+            file_name: str,
+            user_id: uuid.UUID
+    ) -> Optional[str]:
         with open(file_path, "rb") as file:
-            file_id = str(uuid4())  
+            file_id = str(uuid4())
             supabase.storage.from_(bucket_name).upload(file_id, file)
             file_size = os.path.getsize(file_path)
             async with PgSingleton().session as db:
@@ -50,7 +51,8 @@ class SupabaseStorage:
         try:
             async with PgSingleton().session as db:
                 file_record = await db.execute(
-                    select(Files).where(Files.id == file_uuid, Files.created_by == user_id)
+                    select(Files).where(Files.id == file_uuid,
+                                        Files.created_by == user_id)
                 )
                 file_record = file_record.scalars().first()
                 if not file_record:
@@ -65,7 +67,6 @@ class SupabaseStorage:
             logging.error(f"Ошибка при удалении файла: {e}")
             return False
 
-
     @staticmethod
     async def rename_file(
             file_uuid: UUID,
@@ -78,11 +79,13 @@ class SupabaseStorage:
         try:
             async with PgSingleton().session as db:
                 file_record = await db.execute(
-                    select(Files).where(Files.id == file_uuid, Files.created_by == user_id)
+                    select(Files).where(Files.id == file_uuid,
+                                        Files.created_by == user_id)
                 )
                 file_record = file_record.scalars().first()
                 if not file_record:
-                    raise HTTPException(status_code=404, detail="Файл не найден")
+                    raise HTTPException(status_code=404,
+                                        detail="Файл не найден")
                 file_record.file_name = new_name
                 db.add(file_record)
                 await db.commit()
@@ -93,4 +96,3 @@ class SupabaseStorage:
             raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-

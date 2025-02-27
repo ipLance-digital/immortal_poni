@@ -17,7 +17,7 @@ class RedisSingleton:
                 host=os.getenv("REDIS_HOST"),
                 port=int(os.getenv("REDIS_PORT")),
                 password=os.getenv("REDIS_PASSWORD"),
-                username=os.getenv("REDIS_USERNAME") ,
+                username=os.getenv("REDIS_USERNAME"),
                 db=int(os.getenv("REDIS_DB")),
             )
 
