@@ -1,8 +1,3 @@
-"""
-Модуль маршрутизации.
-Объединяет все роутеры приложения в единый маршрутизатор.
-"""
-
 from fastapi import APIRouter
 from app.api import users, auth, storage
 
