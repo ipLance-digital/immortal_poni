@@ -11,7 +11,7 @@ from app.schemas.users import (
 from app.core.security import get_password_hash
 from app.api.auth import get_current_user
 from typing import Dict
-from app.database import PgSingleton
+from app.core.database import PgSingleton
 
 router = APIRouter()
 

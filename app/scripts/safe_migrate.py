@@ -1,21 +1,19 @@
-"""
-Скрипт для безопасного выполнения миграций с автоматическим откатом и повторным применением.
-"""
-
 import subprocess
 import os
 import sys
 import logging
 from dotenv import load_dotenv
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 
-def run_migrations(alembic_ini: str = "app/alembic.ini"):
+def run_migrations(alembic_ini: str = "alembic.ini"):
     """
         Запускает миграции с автоматическим откатом и повторным применением
     """
@@ -43,8 +41,9 @@ def run_migrations(alembic_ini: str = "app/alembic.ini"):
 
     logger.info("\nПредварительный просмотр SQL миграции:")
     try:
-        # Просмотр SQL миграции
-        subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head", "--sql"], check=True)
+        subprocess.run([
+            "alembic", "-c", alembic_ini, "upgrade", "head", "--sql"
+        ], check=True)
     except subprocess.CalledProcessError as e:
         logger.error(f"Ошибка при просмотре SQL миграции: {e}")
         sys.exit(1)
@@ -56,20 +55,32 @@ def run_migrations(alembic_ini: str = "app/alembic.ini"):
 
     logger.info("\nПрименение миграции...")
     try:
-        subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head"], check=True)
+        subprocess.run([
+            "alembic", "-c",
+            alembic_ini,
+            "upgrade",
+            "head"
+        ], check=True)
         logger.info("Миграция успешно применена!")
     except subprocess.CalledProcessError as e:
         logger.error(f"Ошибка при применении миграции: {e}")
         logger.info("Попытка отката и повторного применения миграции...")
 
         try:
-            # Откат до последней стабильной версии
             logger.info("Откат миграции...")
-            subprocess.run(["alembic", "-c", alembic_ini, "downgrade", "base"], check=True)
-
-            # Повторное применение миграции
+            subprocess.run([
+                "alembic", "-c",
+                alembic_ini,
+                "downgrade",
+                "base"
+            ], check=True)
             logger.info("Повторное применение миграции...")
-            subprocess.run(["alembic", "-c", alembic_ini, "upgrade", "head"], check=True)
+            subprocess.run([
+                "alembic",
+                "-c", alembic_ini,
+                "upgrade",
+                "head"
+            ], check=True)
             logger.info("Миграция успешно применена после отката!")
         except subprocess.CalledProcessError as e:
             logger.error(f"Ошибка при откате и повторном применении миграции: {e}")

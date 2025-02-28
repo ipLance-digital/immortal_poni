@@ -5,19 +5,11 @@ from typing import Optional
 
 
 class UserBase(BaseModel):
-    """
-        Базовая схема пользователя.
-    """
-
     email: EmailStr
     username: str
 
 
 class UserCreate(UserBase):
-    """
-        Схема создания пользователя.
-    """
-
     email: EmailStr = Field(..., example="user@example.com", nullable=True)
     username: str = Field(..., example="johndoe", nullable=True)
     password: str = Field(..., min_length=8, example="strongpass123", nullable=True)
@@ -25,19 +17,10 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    """
-        Схема обновления пользователя.
-        Все поля опциональны.
-    """
-
     password: Optional[str] = None
 
 
 class UserResponse(UserBase):
-    """
-        Схема ответа с данными пользователя.
-    """
-
     id: UUID
     created_at: datetime
 
@@ -46,10 +29,5 @@ class UserResponse(UserBase):
 
 
 class UserList(BaseModel):
-    """
-        Схема списка пользователей.
-    """
-
     total: int
     items: list[UserResponse]
-
