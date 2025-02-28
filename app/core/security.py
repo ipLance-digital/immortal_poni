@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 import os
-from app.redis import RedisSingleton
+from app.core.redis import RedisSingleton
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -39,4 +39,3 @@ async def is_token_blacklisted(token: str) -> bool:
     """
     redis_client = await RedisSingleton().redis_client
     return await redis_client.exists(token) == 1  
-
