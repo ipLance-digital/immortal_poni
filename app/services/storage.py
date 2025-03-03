@@ -9,7 +9,7 @@ from supabase import create_client, Client
 from fastapi import HTTPException
 from typing import Optional
 from app.core.config import Settings
-from app.database import PgSingleton
+from app.core.database import PgSingleton
 from app.models.files import Files
 import logging
 
@@ -46,18 +46,16 @@ class SupabaseStorage:
     @staticmethod
     async def delete_file(file_uuid: UUID, user_id: UUID):
         """
-        Удаляет файл из Supabase Storage и базы данных.
+            Удаляет файл из Supabase Storage и базы данных.
         """
         try:
             async with PgSingleton().session as db:
                 file_record = await db.execute(
                     select(Files).where(Files.id == file_uuid,
-                                        Files.created_by == user_id)
-                )
+                                        Files.created_by == user_id))
                 file_record = file_record.scalars().first()
                 if not file_record:
                     return False
-
                 supabase.storage.from_(bucket_name).remove([str(file_uuid)])
                 stmt = delete(Files).where(Files.id == file_uuid)
                 await db.execute(stmt)
@@ -80,12 +78,13 @@ class SupabaseStorage:
             async with PgSingleton().session as db:
                 file_record = await db.execute(
                     select(Files).where(Files.id == file_uuid,
-                                        Files.created_by == user_id)
-                )
+                                        Files.created_by == user_id))
                 file_record = file_record.scalars().first()
                 if not file_record:
-                    raise HTTPException(status_code=404,
-                                        detail="Файл не найден")
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Файл не найден"
+                    )
                 file_record.file_name = new_name
                 db.add(file_record)
                 await db.commit()

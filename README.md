@@ -1,10 +1,7 @@
-# immortal_poni
+# ipLance(immortal_poni)
+### Фриланс платформа
 
-## Описание
-
-Фриланс платформа
-
-## Технологии
+## Стэк
 
 - FastAPI
 - SQLAlchemy
@@ -43,26 +40,31 @@
 - pytest
 
 ### Миграции
+Команды по миграциям лежат в alembic/README
+####Создать новую миграцию
 
-- Создать новую миграцию
+- win - python .\app\scripts\safe_migrate.py
+- *nix - python app/scripts/safe_migrate.py
 
-python .\app\scripts\safe_migrate.py
-
-### Базы данных
+### Даза данных
 
 Асинхронное подключение к базе данных.
 Модуль инициализации базы данных:
 app.database.py
 
-### Redis
+#### Хранилище
 
+Организовано облачное хранилище на базе supabase.com вместе с бд.
+Работает через моудль supabase.
+
+### Redis
+редис подключен в redis-cloud.
 Для мониторинга redis есть ПО:
 
 sudo apt update
 sudo apt install snapd
 sudo snap install redisinsight
 
-### Хранилище
+---
 
-Организовано облачное хранилище на базе supabase.com вместе с бд.
-Работает через моудль supabase.
+
