@@ -17,6 +17,11 @@ router = APIRouter()
 
 pg_singleton = PgSingleton()
 
+async def user_exists(db_session, assign_to: UUID) -> bool:
+    result = await db_session.execute(select(Users).filter(Users.id == assign_to))
+    user = result.scalar_one_or_none()
+    return user is not None
+
 
 @router.get("", response_model=UserList)
 async def get_users(
