@@ -1,5 +1,11 @@
 from fastapi import APIRouter
-from app.api import users, auth, storage
+from app.api import (
+    users,
+    auth,
+    storage,
+    orders,
+)
+
 
 def get_router() -> APIRouter:
     """
@@ -19,6 +25,6 @@ def get_router() -> APIRouter:
     router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
     router.include_router(users.router, prefix="/users", tags=["Users"])
     router.include_router(storage.router, prefix="/storage", tags=["Storage"])
-    router.include_router(order.router, prefix="/order", tags=["Order"])
+    router.include_router(orders.router, prefix="/order", tags=["Order"])
 
     return router

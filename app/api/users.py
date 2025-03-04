@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from uuid import UUID
 from app.models.users import Users
+from app.schemas.orders import DeleteOrder
 from app.schemas.users import (
     UserCreate,
     UserUpdate,
@@ -10,18 +11,20 @@ from app.schemas.users import (
 )
 from app.core.security import get_password_hash
 from app.api.auth import get_current_user
-from typing import Dict
+from typing import Dict, Any, Coroutine
 from app.core.database import PgSingleton
 
 router = APIRouter()
 
 pg_singleton = PgSingleton()
 
-async def user_exists(db_session, assign_to: UUID) -> bool:
-    result = await db_session.execute(select(Users).filter(Users.id == assign_to))
+async def user_exists(db_session, user_id: UUID) -> bool:
+    """
+        Проверка на наличие пользователя в бд.
+    """
+    result = await db_session.execute(select(Users).filter(Users.id == user_id))
     user = result.scalar_one_or_none()
-    return user is not None
-
+    return user
 
 @router.get("", response_model=UserList)
 async def get_users(
@@ -116,8 +119,7 @@ async def update_user(
     Обновление данных пользователя.
     """
     async with pg_singleton.session as db:
-        db_user = current_user
-        if db_user is None:
+        if current_user is None:
             raise HTTPException(status_code=404, detail="User not found")
 
         update_data: Dict = user.model_dump(exclude_unset=True)
@@ -125,9 +127,9 @@ async def update_user(
             update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
 
         for field, value in update_data.items():
-            setattr(db_user, field, value)
+            setattr(current_user, field, value)
 
-        db.add(db_user)
+        db.add(current_user)
         await db.commit()
-        await db.refresh(db_user)
-        return db_user
+        await db.refresh(current_user)
+        return current_user
