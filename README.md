@@ -50,12 +50,14 @@
 
 Асинхронное подключение к базе данных.
 Модуль инициализации базы данных:
-app.database.py
+app.core.database.py
 
 #### Хранилище
 
 Организовано облачное хранилище на базе supabase.com вместе с бд.
 Работает через моудль supabase.
+(https://supabase.com/dashboard/project/fbvupbfiavdrewoxrtwp)
+Для получения доступа писать brevnishko2 или SerMichbboy
 
 ### Redis
 редис подключен в redis-cloud.
@@ -66,5 +68,3 @@ sudo apt install snapd
 sudo snap install redisinsight
 
 ---
-
-

@@ -31,8 +31,21 @@ class CreateOrder(BaseModel):
     body: str
     price: int
     assign_to: Optional[UUID]
-    status: int
+    status: int = 1
     deadline: Optional[datetime]
 
     class Config:
         from_attributes = True
+
+
+class DeleteOrder(BaseModel):
+    id: Optional[UUID]
+
+
+class UpdateOrder(BaseModel):
+    name: Optional[str] = None
+    body: Optional[str] = None
+    price: Optional[float] = None
+    assign_to: Optional[int] = None
+    status_id: Optional[int] = None
+    deadline: Optional[datetime] = None
