@@ -46,7 +46,7 @@
 - win - python .\app\scripts\safe_migrate.py
 - *nix - python app/scripts/safe_migrate.py
 
-### Даза данных
+### База данных
 
 Асинхронное подключение к базе данных.
 Модуль инициализации базы данных:
