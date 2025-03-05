@@ -41,7 +41,7 @@
 
 ### Миграции
 Команды по миграциям лежат в alembic/README
-####Создать новую миграцию
+Создать новую миграцию
 
 - win - python .\app\scripts\safe_migrate.py
 - *nix - python app/scripts/safe_migrate.py
