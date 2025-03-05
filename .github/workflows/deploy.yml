@@ -26,20 +26,16 @@ jobs:
             echo " Переход в папку проекта..."
             cd /var/immortal_poni/dockers/immortal_poni
 
-            echo " Сброс локальных изменений..."
-            git reset --hard HEAD
-            git clean -fd
-
+            echo " Остановка старых контейнеров..."
+            docker compose down
+            
             echo "⬇ Обновление кода из репозитория..."
-            git pull origin Git_Actions_test
+            git pull 
 
             echo " Установка Docker Compose, если его нет..."
             if ! command -v docker compose &> /dev/null; then
               sudo apt-get update && sudo apt-get install -y docker-compose-plugin
             fi
-
-            echo " Остановка старых контейнеров..."
-            docker compose down
 
             echo " Очистка неиспользуемых данных..."
             docker system prune -a -f
