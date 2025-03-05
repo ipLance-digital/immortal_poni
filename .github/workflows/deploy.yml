@@ -18,7 +18,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd /var/immortal_poni/dockers/immortal_poni
             git pull origin Git_Actions_test
