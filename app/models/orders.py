@@ -38,8 +38,9 @@ class Order(Base):
         DateTime, nullable=False, server_default=func.now()
     )
     deadline: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    attachments: Mapped[str] = mapped_column(String, nullable=True)
-
+    attachments = relationship(
+        "OrderAttachment", back_populates="order", cascade="all, delete-orphan"
+    )
     creator = relationship(
         "Users", back_populates="orders_created", foreign_keys=[created_by]
     )
@@ -56,3 +57,17 @@ class OrderStatus(Base):
     name: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
 
     orders = relationship("Order", back_populates="status")
+
+
+class OrderAttachment(Base):
+    __tablename__ = "order_attachments"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), default=uuid.uuid4, primary_key=True
+    )
+    order_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False
+    )
+    file_id: Mapped[str] = mapped_column(String, nullable=False)
+
+    order = relationship("Order", back_populates="attachments")

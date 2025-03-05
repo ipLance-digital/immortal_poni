@@ -29,7 +29,12 @@ class SupabaseStorage:
     ) -> Optional[str]:
         with open(file_path, "rb") as file:
             file_id = str(uuid4())
-            supabase.storage.from_(bucket_name).upload(file_id, file)
+            supabase.storage.from_(
+                bucket_name
+            ).upload(
+                file_id,
+                file
+            )
             file_size = os.path.getsize(file_path)
             async with PgSingleton().session as db:
                 file_record = Files(
@@ -51,12 +56,20 @@ class SupabaseStorage:
         try:
             async with PgSingleton().session as db:
                 file_record = await db.execute(
-                    select(Files).where(Files.id == file_uuid,
-                                        Files.created_by == user_id))
+                    select(
+                        Files
+                    ).where(
+                        Files.id == file_uuid,
+                        Files.created_by == user_id)
+                )
                 file_record = file_record.scalars().first()
                 if not file_record:
                     return False
-                supabase.storage.from_(bucket_name).remove([str(file_uuid)])
+                supabase.storage.from_(
+                    bucket_name
+                ).remove(
+                    [str(file_uuid)]
+                )
                 stmt = delete(Files).where(Files.id == file_uuid)
                 await db.execute(stmt)
                 await db.commit()
@@ -77,8 +90,12 @@ class SupabaseStorage:
         try:
             async with PgSingleton().session as db:
                 file_record = await db.execute(
-                    select(Files).where(Files.id == file_uuid,
-                                        Files.created_by == user_id))
+                    select(
+                        Files
+                    ).where(
+                        Files.id == file_uuid,
+                        Files.created_by == user_id)
+                )
                 file_record = file_record.scalars().first()
                 if not file_record:
                     raise HTTPException(
