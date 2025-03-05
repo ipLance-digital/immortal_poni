@@ -8,20 +8,43 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Deploy via SSH
+      - name: Connect to server and deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
+            set -e  # Остановить выполнение при ошибке
+
+            echo " Переход в папку проекта..."
             cd /var/immortal_poni/dockers/immortal_poni
+
+            echo " Сброс локальных изменений..."
+            git reset --hard HEAD
+            git clean -fd
+
+            echo "⬇ Обновление кода из репозитория..."
             git pull origin Git_Actions_test
-            docker-compose down
+
+            echo " Установка Docker Compose, если его нет..."
+            if ! command -v docker compose &> /dev/null; then
+              sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+            fi
+
+            echo " Остановка старых контейнеров..."
+            docker compose down
+
+            echo " Очистка неиспользуемых данных..."
             docker system prune -a -f
-            docker-compose up -d
+
+            echo " Запуск новых контейнеров..."
+            docker compose up -d
+
+            echo " Деплой завершён!"
