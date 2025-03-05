@@ -87,7 +87,7 @@ async def get_orders(
         )
 
 
-@router.get("/order/{order_uuid}", response_model=OrderBase)
+@router.get("/{order_uuid}", response_model=OrderBase)
 async def retrieve_order(
         order_uuid: UUID,
         current_user: Users = Depends(get_current_user),
