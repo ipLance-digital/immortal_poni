@@ -19,28 +19,23 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          port: 22
           script: |
             set -e  # Остановить выполнение при ошибке
 
-            echo " Переход в папку проекта..."
+            echo " Переход в рабочую директорию..."
             cd /var/immortal_poni/dockers/immortal_poni
 
             echo " Остановка старых контейнеров..."
             docker compose down
-            
+
             echo "⬇ Обновление кода из репозитория..."
-            git pull 
+            git pull origin Git_Actions_test
 
-            echo " Установка Docker Compose, если его нет..."
-            if ! command -v docker compose &> /dev/null; then
-              sudo apt-get update && sudo apt-get install -y docker-compose-plugin
-            fi
-
-            echo " Очистка неиспользуемых данных..."
+            echo " Очистка неиспользуемых данных Docker..."
             docker system prune -a -f
 
-            echo " Запуск новых контейнеров..."
+            echo " Сборка и запуск новых контейнеров..."
             docker compose up -d
 
             echo " Деплой завершён!"
