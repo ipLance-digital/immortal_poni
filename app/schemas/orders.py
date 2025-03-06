@@ -13,7 +13,6 @@ class OrderBase(BaseModel):
     status_id: int
     created_at: datetime
     deadline: Optional[datetime]
-    attachments: Optional[str]
 
     class Config:
         from_attributes = True
@@ -33,19 +32,16 @@ class CreateOrder(BaseModel):
     assign_to: Optional[UUID]
     status: int = 1
     deadline: Optional[datetime]
+    attachments: list[str] = []
 
     class Config:
         from_attributes = True
-
-
-class DeleteOrder(BaseModel):
-    id: Optional[UUID]
 
 
 class UpdateOrder(BaseModel):
     name: Optional[str] = None
     body: Optional[str] = None
     price: Optional[float] = None
-    assign_to: Optional[int] = None
+    assign_to: Optional[UUID]
     status_id: Optional[int] = None
     deadline: Optional[datetime] = None

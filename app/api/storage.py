@@ -36,7 +36,11 @@ async def upload_file(
             tmp.write(content)
             tmp_path = tmp.name
         file_name = file.filename
-        file_id = await SupabaseStorage.upload_file(tmp_path, file_name, current_user.id)
+        file_id = await SupabaseStorage.upload_file(
+            tmp_path,
+            file_name,
+            current_user.id
+        )
         logger.info(f"file_id: {file_id}")
         return {"message": f"Successful file (file_id: {file_id}) added"}
     except HTTPException as e:
@@ -57,7 +61,9 @@ async def delete_file(
     """
     try:
         await SupabaseStorage.delete_file(file_uuid, current_user.id)
-        return {"message": f"Successful file (file_id: {file_uuid}) deleted"}
+        return {
+            "message": f"Successful file (file_id: {file_uuid}) deleted"
+        }
     except HTTPException as e:
         raise
     except Exception as e:
@@ -77,7 +83,11 @@ async def rename_file(
         Переименовывает файл.
     """
     try:
-        await SupabaseStorage.rename_file(file_uuid, current_user.id, new_name)
+        await SupabaseStorage.rename_file(
+            file_uuid,
+            current_user.id,
+            new_name
+        )
         return {"message": f"Successful rename file (file_id: {file_uuid})"}
     except HTTPException as e:
         raise
