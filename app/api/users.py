@@ -18,7 +18,9 @@ class UsersApi(BaseApi):
     def __init__(self):
         super().__init__()
         self.router.add_api_route(
-            "", self.get_users, methods=["GET"], response_model=UserList
+            "", self.get_users,
+            methods=["GET"],
+            response_model=UserList
         )
         self.router.add_api_route(
             "",
@@ -28,7 +30,10 @@ class UsersApi(BaseApi):
             status_code=status.HTTP_201_CREATED,
         )
         self.router.add_api_route(
-            "/{user_id}", self.get_user, methods=["GET"], response_model=UserResponse
+            "/{user_id}",
+            self.get_user,
+            methods=["GET"],
+            response_model=UserResponse
         )
         self.router.add_api_route(
             "/change_data",
@@ -39,7 +44,10 @@ class UsersApi(BaseApi):
 
     def check_superuser(self, user: Users):
         if not user.is_superuser:
-            raise HTTPException(status_code=403, detail="Forbidden")
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden"
+            )
 
     async def get_users(
         self,
@@ -81,7 +89,10 @@ class UsersApi(BaseApi):
             user = await db.execute(select(Users).where(Users.id == user_id))
             user = user.scalars().first()
             if user is None:
-                raise HTTPException(status_code=404, detail="User not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="User not found"
+                )
         return user
 
     async def create_user(
@@ -132,7 +143,10 @@ class UsersApi(BaseApi):
         async with self.db as db:
             db_user = current_user
             if db_user is None:
-                raise HTTPException(status_code=404, detail="User not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="User not found"
+                )
 
             update_data: Dict = user.model_dump(exclude_unset=True)
             if "password" in update_data:

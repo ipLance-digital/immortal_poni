@@ -6,19 +6,22 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.orm import selectinload
 from app.api.auth import get_current_user
 from app.api.base import BaseApi
-from app.models.orders import Order, OrderAttachment
 from app.models.users import Users
 from app.schemas.orders import (
     OrderList,
     CreateOrder,
     OrderBase,
-    DeleteOrder,
     UpdateOrder,
 )
 from fastapi import (
     Depends,
     HTTPException,
     File,
+    UploadFile,
+)
+from app.models.orders import (
+    Order,
+    OrderAttachment,
 )
 
 
@@ -26,10 +29,16 @@ class OrdersApi(BaseApi):
     def __init__(self):
         super().__init__()
         self.router.add_api_route(
-            "/create", self.create_order, methods=["POST"], response_model=OrderBase
+            "/create",
+            self.create_order,
+            methods=["POST"],
+            response_model=OrderBase
         )
         self.router.add_api_route(
-            "", self.get_orders, methods=["GET"], response_model=OrderList
+            "",
+            self.get_orders,
+            methods=["GET"],
+            response_model=OrderList
         )
         self.router.add_api_route(
             "/{order_uuid}",
@@ -47,14 +56,15 @@ class OrdersApi(BaseApi):
             "/delete_order/{order_uuid}",
             self.delete_order,
             methods=["DELETE"],
-            response_model=DeleteOrder,
         )
         self.router.add_api_route(
-            "/{order_uuid}/attach_file", self.delete_order, methods=["POST"]
+            "/{order_uuid}/attach_file",
+            self.attach_file_to_order,
+            methods=["POST"]
         )
         self.router.add_api_route(
             "/{order_uuid}/delete_file/{file_uuid}",
-            self.delete_order,
+            self.delete_file_from_order,
             methods=["DELETE"],
         )
 
@@ -69,7 +79,8 @@ class OrdersApi(BaseApi):
         async with self.db as db:
             if data.assign_to and not await self.user_exists(db, data.assign_to):
                 raise HTTPException(
-                    status_code=400, detail="Assigned user does not exist"
+                    status_code=400,
+                    detail="Assigned user does not exist"
                 )
             order = Order(
                 name=data.name,
@@ -79,6 +90,7 @@ class OrdersApi(BaseApi):
                 assign_to=data.assign_to,
                 status_id=data.status,
                 deadline=data.deadline,
+                attachments=data.attachments
             )
             db.add(order)
             await self.update_db(db, order)
@@ -101,12 +113,16 @@ class OrdersApi(BaseApi):
                             Order.assign_to == current_user.id,
                         )
                     )
-                    .options(selectinload(Order.creator), selectinload(Order.assignee))
+                    .options(selectinload(Order.creator),
+                             selectinload(Order.assignee))
                 )
                 orders = result.scalars().all()
             return OrderList(orders=orders)
         except Exception:
-            raise HTTPException(status_code=500, detail="Internal Server Error")
+            raise HTTPException(
+                status_code=500,
+                detail="Internal Server Error"
+            )
 
     async def retrieve_order(
         self,
@@ -127,12 +143,18 @@ class OrdersApi(BaseApi):
                     ),
                     Order.id == order_uuid,
                 )
-                .options(selectinload(Order.creator), selectinload(Order.assignee))
+                .options(
+                    selectinload(Order.creator),
+                    selectinload(Order.assignee)
+                )
             )
             result = await db.execute(query)
             order = result.scalar_one_or_none()
             if not order:
-                raise HTTPException(status_code=404, detail="Order not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="Order not found"
+                )
         return order
 
     async def update_order(
@@ -146,12 +168,16 @@ class OrdersApi(BaseApi):
         """
         async with self.db as db:
             query = select(Order).where(
-                Order.id == order_uuid, Order.created_by == current_user.id
+                Order.id == order_uuid,
+                Order.created_by == current_user.id
             )
             result = await db.execute(query)
             order = result.scalar_one_or_none()
             if not order:
-                raise HTTPException(status_code=404, detail="Order not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="Order not found"
+                )
             update_query = (
                 update(Order)
                 .where(Order.id == order_uuid)
@@ -167,13 +193,14 @@ class OrdersApi(BaseApi):
         self,
         order_uuid: UUID,
         current_user: Users = Depends(get_current_user),
-    ) -> DeleteOrder:
+    ):
         """
         Удаление заказа, если он принадлежит текущему пользователю.
         """
         async with self.db as db:
             query = select(Order).where(
-                Order.id == order_uuid, Order.created_by == current_user.id
+                Order.id == order_uuid,
+                Order.created_by == current_user.id
             )
             result = await db.execute(query)
             order = result.scalar_one_or_none()
@@ -183,13 +210,14 @@ class OrdersApi(BaseApi):
             delete_query = delete(Order).where(Order.id == order_uuid)
             await db.execute(delete_query)
             await db.commit()
-        return DeleteOrder(id=order_uuid)
+
+        return f"Order id {order_uuid} deleted"
 
     async def attach_file_to_order(
-        self,
-        order_uuid: UUID,
-        file: SupabaseStorage.upload_file = File(...),
-        current_user: Users = Depends(get_current_user),
+            self,
+            order_uuid: UUID,
+            file: UploadFile = File(...),
+            current_user: Users = Depends(get_current_user),
     ):
         """
         Прикрепить файл к заказу.
@@ -197,23 +225,35 @@ class OrdersApi(BaseApi):
         async with self.db as db:
             order = await db.execute(
                 select(Order).where(
-                    Order.id == order_uuid, Order.created_by == current_user.id
+                    Order.id == order_uuid,
+                    Order.created_by == current_user.id
                 )
             )
             order = order.scalar_one_or_none()
             if not order:
-                raise HTTPException(status_code=404, detail="Order not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="Order not found"
+                )
+            os.makedirs("temp", exist_ok=True)
             file_path = f"temp/{file.filename}"
             with open(file_path, "wb") as f:
                 f.write(await file.read())
             file_id = await SupabaseStorage.upload_file(
                 file_path, file.filename, current_user.id
             )
-            attachment = OrderAttachment(order_id=order.id, file_id=file_id)
+            attachment = OrderAttachment(
+                order_id=order.id,
+                file_id=file_id
+            )
             db.add(attachment)
             await db.commit()
             os.remove(file_path)
-            return {"file_id": file_id, "message": "File attached successfully"}
+
+            return {
+                "file_id": file_id,
+                "message": "File attached successfully"
+            }
 
     async def delete_file_from_order(
         self,
@@ -227,12 +267,16 @@ class OrdersApi(BaseApi):
         async with self.db as db:
             order = await db.execute(
                 select(Order).where(
-                    Order.id == order_uuid, Order.created_by == current_user.id
+                    Order.id == order_uuid,
+                    Order.created_by == current_user.id
                 )
             )
             order = order.scalar_one_or_none()
             if not order:
-                raise HTTPException(status_code=404, detail="Order not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="Order not found"
+                )
             file_record = await db.execute(
                 select(OrderAttachment).where(
                     OrderAttachment.order_id == order.id,
