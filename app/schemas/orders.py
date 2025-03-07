@@ -21,7 +21,7 @@ class OrderBase(BaseModel):
 class OrderList(BaseModel):
     orders: List[OrderBase]
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
@@ -34,7 +34,7 @@ class CreateOrder(BaseModel):
     deadline: Optional[datetime]
     attachments: list[str] = []
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
@@ -42,6 +42,6 @@ class UpdateOrder(BaseModel):
     name: Optional[str] = None
     body: Optional[str] = None
     price: Optional[float] = None
-    assign_to: Optional[UUID]
+    assign_to: Optional[UUID] = None
     status_id: Optional[int] = None
     deadline: Optional[datetime] = None

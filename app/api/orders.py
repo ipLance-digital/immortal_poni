@@ -181,7 +181,7 @@ class OrdersApi(BaseApi):
             update_query = (
                 update(Order)
                 .where(Order.id == order_uuid)
-                .values(**data.dict(exclude_unset=True))
+                .values(**data.model_dump(exclude_unset=True))
                 .returning(Order)
             )
             updated_result = await db.execute(update_query)
@@ -206,7 +206,6 @@ class OrdersApi(BaseApi):
             order = result.scalar_one_or_none()
             if not order:
                 raise HTTPException(status_code=404, detail="Order not found")
-
             delete_query = delete(Order).where(Order.id == order_uuid)
             await db.execute(delete_query)
             await db.commit()

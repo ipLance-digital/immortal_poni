@@ -42,7 +42,7 @@ async def upload_file(
             current_user.id
         )
         logger.info(f"file_id: {file_id}")
-        return {"message": f"Successful file (file_id: {file_id}) added"}
+        return {"message": file_id}
     except HTTPException as e:
         raise
     except Exception as e:
