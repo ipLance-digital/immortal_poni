@@ -14,9 +14,11 @@
 
 Для установки зависимостей используйте команду:
 
-- pip install uv
-- uv venv --python=python3.12
-- uv pip install -r requirements.txt
+python -m venv .venv
+unix:source .venv/bin/activate
+win: ./.venv/Scripts/activate
+pip install uv 
+uv pip install -r requirements.txt
 
 ### Запуск
 

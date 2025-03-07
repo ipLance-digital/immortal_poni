@@ -8,8 +8,8 @@ from sqlalchemy import select
 
 class BaseApi:
     def __init__(self):
-        self.prefix = f"/{self.__class__.__name__.split("Api")[0].lower()}"
-        self.tags = [self.__class__.__name__.split("Api")[0]]
+        self.prefix = f"/{self.__class__.__name__.split('Api')[0].lower()}"
+        self.tags = [self.__class__.__name__.split('Api')[0]]
         self.db_connection = PgSingleton()
         self.router = APIRouter()
 
