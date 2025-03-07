@@ -1,9 +1,11 @@
 import os
 import tempfile
-from uuid import uuid4
+from uuid import UUID
+import pytest
+from app.tests.conftest import delete_user
 
-
-def test_register_user(client):
+@pytest.mark.asyncio
+async def test_register_user(client):
     user_data = {
         "username": "newuser",
         "email": "newuser@example.com",
@@ -14,9 +16,8 @@ def test_register_user(client):
     assert response.status_code == 200
     assert response.json()["username"] == user_data["username"]
 
-
-def test_upload_file(client):
-    """Test file upload."""
+@pytest.mark.asyncio
+async def test_upload_file(client):
     file_content = b"Test file content"
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(file_content)
@@ -28,46 +29,38 @@ def test_upload_file(client):
     login_response = client.post("api/v1/auth/login", data=login_data)
     assert login_response.status_code == 200
     access_token = login_response.json()["access_token"]
-
-    # Открываем файл перед отправкой в запрос
     with open(tmp_path, "rb") as file:
         response = client.post(
             "api/v1/storage/upload",
-            files={"file": (
-            os.path.basename(tmp_path), file, "application/octet-stream")},
+            files={
+                "file": (
+                    os.path.basename(tmp_path),
+                    file,
+                    "application/octet-stream"
+                )
+            },
             headers={"Authorization": f"Bearer {access_token}"}
         )
-
     assert response.status_code == 200
     response_data = response.json()
     assert "message" in response_data
-    assert "file_id" in response_data[
-        "message"]
-    os.remove(tmp_path)
-
-
-def test_delete_file(client):
-    """Test file deletion."""
-    file_id = uuid4()
-    login_data = {
-        "username": "newuser",
-        "password": "newpassword"
-    }
-    login_response = client.post("api/v1/auth/login", data=login_data)
-    assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    assert response_data["message"]
+    file_id = response_data["message"]
     response = client.delete(
-        f"api/v1/storage/delete/{file_id}",
+        f"api/v1/storage/delete/{UUID(file_id)}",
         headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
-    assert "message" in response.json()
+    os.remove(tmp_path)
+    response = client.post(
+        "api/v1/auth/logout",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert response.status_code == 200
 
-
-def test_rename_file(client):
-    """Test file renaming."""
-    file_id = uuid4()
-    new_name = "new_name.txt"
+@pytest.mark.asyncio
+async def test_rename_file(client):
+    new_name = "new_name"
     login_data = {
         "username": "newuser",
         "password": "newpassword"
@@ -75,10 +68,88 @@ def test_rename_file(client):
     login_response = client.post("api/v1/auth/login", data=login_data)
     assert login_response.status_code == 200
     access_token = login_response.json()["access_token"]
+    response = client.get(
+        "api/v1/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    user_id = response.json()['id']
+    file_content = b"Test file content"
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(file_content)
+        tmp_path = tmp.name
+    with open(tmp_path, "rb") as file:
+        response = client.post(
+            "api/v1/storage/upload",
+            files={
+                "file": (
+                    os.path.basename(tmp_path),
+                    file,
+                    "application/octet-stream"
+                )
+            },
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+    assert response.status_code == 200
+    file_id = response.json()['message']
     response = client.patch(
-        f"api/v1/storage/rename/{file_id}",
-        json={"new_name": new_name},
+        f"api/v1/storage/rename/{UUID(file_id)}?new_name={new_name}",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert response.status_code == 200
+    response = client.delete(
+        f"api/v1/storage/delete/{UUID(file_id)}",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert "message" in response.json()
+    response = client.post(
+        "api/v1/auth/logout",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert response.status_code == 200
+
+@pytest.mark.asyncio
+async def test_delete_file(client):
+    login_data = {
+        "username": "newuser",
+        "password": "newpassword"
+    }
+    login_response = client.post("api/v1/auth/login", data=login_data)
+    assert login_response.status_code == 200
+    access_token = login_response.json()["access_token"]
+    response = client.get(
+        "api/v1/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    file_content = b"Test file content"
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(file_content)
+        tmp_path = tmp.name
+    with open(tmp_path, "rb") as file:
+        response = client.post(
+            "api/v1/storage/upload",
+            files={
+                "file": (
+                    os.path.basename(tmp_path),
+                    file,
+                    "application/octet-stream"
+                )
+            },
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+    assert response.status_code == 200
+    file_id = response.json()['message']
+    response = client.delete(
+        f"api/v1/storage/delete/{UUID(file_id)}",
         headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
     assert "message" in response.json()
+    response = client.post(
+        "api/v1/auth/logout",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert response.status_code == 200
+
+@pytest.mark.asyncio
+async def test_delete_test_user():
+    await delete_user('newuser')

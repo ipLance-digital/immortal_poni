@@ -1,3 +1,8 @@
+import asyncio
+import pytest
+from app.tests.conftest import delete_user
+
+
 def test_register_user(client):
     user_data = {
         "username": "newuser",
@@ -57,8 +62,8 @@ def test_get_me(client):
     assert response.status_code == 200
     assert response.json()["username"] == "newuser"
 
-
-def test_logout(client):
+@pytest.mark.asyncio
+async def test_logout(client):
     login_data = {
         "username": "newuser",
         "password": "newpassword"
@@ -73,3 +78,7 @@ def test_logout(client):
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
 
+@pytest.mark.asyncio
+async def test_delete_test_user():
+    await delete_user('newuser')
+    await asyncio.sleep(1)
