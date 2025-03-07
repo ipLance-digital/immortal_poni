@@ -206,7 +206,6 @@ class OrdersApi(BaseApi):
             order = result.scalar_one_or_none()
             if not order:
                 raise HTTPException(status_code=404, detail="Order not found")
-
             delete_query = delete(Order).where(Order.id == order_uuid)
             await db.execute(delete_query)
             await db.commit()

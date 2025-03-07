@@ -42,6 +42,6 @@ class UpdateOrder(BaseModel):
     name: Optional[str] = None
     body: Optional[str] = None
     price: Optional[float] = None
-    assign_to: Optional[UUID]
+    assign_to: Optional[UUID] = None
     status_id: Optional[int] = None
     deadline: Optional[datetime] = None
