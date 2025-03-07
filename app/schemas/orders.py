@@ -21,7 +21,7 @@ class OrderBase(BaseModel):
 class OrderList(BaseModel):
     orders: List[OrderBase]
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 
@@ -34,7 +34,7 @@ class CreateOrder(BaseModel):
     deadline: Optional[datetime]
     attachments: list[str] = []
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 

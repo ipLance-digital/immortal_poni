@@ -19,14 +19,6 @@ async def test_register_user(client):
 
 @pytest.mark.asyncio
 async def test_create_order(client):
-    order_data = {
-        "name": "New Order",
-        "body": "Order details",
-        "price": 100,
-        "status": 1,
-        "assign_to": "d5ad45d6-4560-484d-b068-39f26e86696e",
-        "deadline": "2050-01-01T10:11:50",
-    }
     login_data = {
         "username": "newuser",
         "password": "newpassword"
@@ -34,6 +26,19 @@ async def test_create_order(client):
     login_response = client.post("api/v1/auth/login", data=login_data)
     assert login_response.status_code == 200
     access_token = login_response.json()["access_token"]
+    response = client.get(
+        "api/v1/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    user_id = response.json()['id']
+    order_data = {
+        "name": "New Order",
+        "body": "Order details",
+        "price": 100,
+        "status": 1,
+        "assign_to": user_id,
+        "deadline": "2050-01-01T10:11:50",
+    }
     response = client.post(
         "api/v1/orders/create",
         json=order_data,
@@ -42,7 +47,6 @@ async def test_create_order(client):
     assert response.status_code == 200
     assert response.json()["name"] == order_data["name"]
     order_id = response.json()["id"]
-
     response = client.delete(
         f"api/v1/orders/delete_order/{UUID(order_id)}",
         headers={"Authorization": f"Bearer {access_token}"}
@@ -57,16 +61,6 @@ async def test_attach_file_to_order(client):
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(file_content)
         tmp_path = tmp.name
-
-    order_data = {
-        "name": "New Order with File",
-        "body": "Order details with file",
-        "price": 100,
-        "status": 1,
-        "assign_to": "d5ad45d6-4560-484d-b068-39f26e86696e",
-        "deadline": "2050-01-01T10:11:50",
-    }
-
     login_data = {
         "username": "newuser",
         "password": "newpassword"
@@ -74,13 +68,25 @@ async def test_attach_file_to_order(client):
     login_response = client.post("api/v1/auth/login", data=login_data)
     assert login_response.status_code == 200
     access_token = login_response.json()["access_token"]
+    response = client.get(
+        "api/v1/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    user_id = response.json()['id']
+    order_data = {
+        "name": "New Order with File",
+        "body": "Order details with file",
+        "price": 100,
+        "status": 1,
+        "assign_to": user_id,
+        "deadline": "2050-01-01T10:11:50",
+    }
     order_response = client.post(
         "api/v1/orders/create",
         json=order_data,
         headers={"Authorization": f"Bearer {access_token}"}
     )
     order_id = order_response.json()["id"]
-
     with open(tmp_path, "rb") as file:
         response = client.post(
             f"api/v1/orders/{UUID(order_id)}/attach_file",
@@ -100,14 +106,6 @@ async def test_attach_file_to_order(client):
 
 @pytest.mark.asyncio
 async def test_update_order(client):
-    order_data = {
-        "name": "New Order to Update",
-        "body": "Order details",
-        "price": 150,
-        "status": 1,
-        "assign_to": "d5ad45d6-4560-484d-b068-39f26e86696e",
-        "deadline": "2050-01-01T10:11:50",
-    }
     update_data = {
         "price": 200,
     }
@@ -119,14 +117,25 @@ async def test_update_order(client):
     login_response = client.post("api/v1/auth/login", data=login_data)
     assert login_response.status_code == 200
     access_token = login_response.json()["access_token"]
-
+    response = client.get(
+        "api/v1/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    user_id = response.json()['id']
+    order_data = {
+        "name": "New Order to Update",
+        "body": "Order details",
+        "price": 150,
+        "status": 1,
+        "assign_to": user_id,
+        "deadline": "2050-01-01T10:11:50",
+    }
     order_response = client.post(
         "api/v1/orders/create",
         json=order_data,
         headers={"Authorization": f"Bearer {access_token}"}
     )
     order_id = order_response.json()["id"]
-
     response = client.patch(
         f"api/v1/orders/update_order/{UUID(order_id)}",
         json=update_data,
@@ -138,15 +147,6 @@ async def test_update_order(client):
 
 @pytest.mark.asyncio
 async def test_delete_order(client):
-    order_data = {
-        "name": "Order to Delete",
-        "body": "Order details",
-        "price": 100,
-        "status": 1,
-        "assign_to": "d5ad45d6-4560-484d-b068-39f26e86696e",
-        "deadline": "2050-01-01T10:11:50",
-    }
-
     login_data = {
         "username": "newuser",
         "password": "newpassword"
@@ -154,14 +154,25 @@ async def test_delete_order(client):
     login_response = client.post("api/v1/auth/login", data=login_data)
     assert login_response.status_code == 200
     access_token = login_response.json()["access_token"]
-
+    response = client.get(
+        "api/v1/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    user_id = response.json()['id']
+    order_data = {
+        "name": "Order to Delete",
+        "body": "Order details",
+        "price": 100,
+        "status": 1,
+        "assign_to": user_id,
+        "deadline": "2050-01-01T10:11:50",
+    }
     order_response = client.post(
         "api/v1/orders/create",
         json=order_data,
         headers={"Authorization": f"Bearer {access_token}"}
     )
     order_id = order_response.json()["id"]
-
     response = client.delete(
         f"api/v1/orders/delete_order/{UUID(order_id)}",
         headers={"Authorization": f"Bearer {access_token}"}

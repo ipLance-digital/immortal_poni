@@ -23,7 +23,7 @@ class RedisSingleton:
 
     async def close_redis(self):
         if self._redis_client:
-            await self._redis_client.close()
+            await self._redis_client.aclose()
             self._redis_client = None
             print("Redis connection closed.")
 

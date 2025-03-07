@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from jose import jwt
 from passlib.context import CryptContext
 import os
@@ -14,7 +14,7 @@ def get_password_hash(password):
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(
+    expire = datetime.now(UTC) + timedelta(
         minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 300))
     )
     to_encode.update({"exp": expire})

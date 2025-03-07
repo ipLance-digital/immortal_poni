@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from sqlalchemy import func
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from app.models.users import Users
 from app.schemas.users import (
     UserResponse, 
@@ -162,7 +162,7 @@ async def logout(
         )
         exp = payload.get("exp")
         if exp:
-            expires = int(exp - datetime.utcnow().timestamp())
+            expires = int(exp - datetime.now(UTC).timestamp())
             if expires > 0:
                 await blacklist_token(token, expires)
                 return {"message": "Successfully logged out"}

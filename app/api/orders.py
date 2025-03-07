@@ -181,7 +181,7 @@ class OrdersApi(BaseApi):
             update_query = (
                 update(Order)
                 .where(Order.id == order_uuid)
-                .values(**data.dict(exclude_unset=True))
+                .values(**data.model_dump(exclude_unset=True))
                 .returning(Order)
             )
             updated_result = await db.execute(update_query)
