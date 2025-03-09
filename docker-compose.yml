@@ -10,3 +10,56 @@ services:
       - .:/app
     env_file:
       - .env
+    depends_on:
+      - redis
+      - db
+
+  worker:
+    build: .
+    container_name: immortal_poni_worker
+    command: celery -A app.core.celery:celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
+  flower:
+    build: .
+    container_name: immortal_poni_flower
+    command: celery -A app.core.celery:celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
+  redis:
+    image: redis:latest
+    container_name: immortal_poni_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+#  db:
+#    image: postgres:latest
+#    container_name: immortal_poni_db
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: your_db_password
+#      POSTGRES_DB: your_db_name
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  redis_data:
+  postgres_data:
