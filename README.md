@@ -14,11 +14,15 @@
 
 Для установки зависимостей используйте команду:
 
-python -m venv .venv
-unix:source .venv/bin/activate
-win: ./.venv/Scripts/activate
-pip install uv 
-uv pip install -r requirements.txt
+- python -m venv .venv
+
+- unix:source .venv/bin/activate
+
+- win: ./.venv/Scripts/activate
+
+- pip install uv 
+
+- uv pip install -r requirements.txt
 
 ### Запуск
 
