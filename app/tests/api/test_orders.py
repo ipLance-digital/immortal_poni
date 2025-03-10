@@ -28,7 +28,7 @@ async def test_create_order(client):
     access_token = login_response.json()["access_token"]
     response = client.get(
         "api/v1/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token}
     )
     user_id = response.json()['id']
     order_data = {
@@ -42,14 +42,14 @@ async def test_create_order(client):
     response = client.post(
         "api/v1/orders/create",
         json=order_data,
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token}
     )
     assert response.status_code == 200
     assert response.json()["name"] == order_data["name"]
     order_id = response.json()["id"]
     response = client.delete(
         f"api/v1/orders/delete_order/{UUID(order_id)}",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token}
     )
     assert response.status_code == 200
     assert "deleted" in response.json()
@@ -70,7 +70,7 @@ async def test_attach_file_to_order(client):
     access_token = login_response.json()["access_token"]
     response = client.get(
         "api/v1/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token}
     )
     user_id = response.json()['id']
     order_data = {
@@ -84,7 +84,7 @@ async def test_attach_file_to_order(client):
     order_response = client.post(
         "api/v1/orders/create",
         json=order_data,
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token}
     )
     order_id = order_response.json()["id"]
     with open(tmp_path, "rb") as file:
@@ -92,13 +92,13 @@ async def test_attach_file_to_order(client):
             f"api/v1/orders/{UUID(order_id)}/attach_file",
             files={"file": (
             os.path.basename(tmp_path), file, "application/octet-stream")},
-            headers={"Authorization": f"Bearer {access_token}"}
+            cookies={"access_token": access_token} 
         )
     assert response.status_code == 200
     file_id = response.json()["file_id"]
     response = client.delete(
         f"api/v1/orders/{UUID(order_id)}/delete_file/{UUID(file_id)}",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
     os.remove(tmp_path)
@@ -119,7 +119,7 @@ async def test_update_order(client):
     access_token = login_response.json()["access_token"]
     response = client.get(
         "api/v1/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     user_id = response.json()['id']
     order_data = {
@@ -133,13 +133,13 @@ async def test_update_order(client):
     order_response = client.post(
         "api/v1/orders/create",
         json=order_data,
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     order_id = order_response.json()["id"]
     response = client.patch(
         f"api/v1/orders/update_order/{UUID(order_id)}",
         json=update_data,
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
     assert response.json()["price"] == update_data["price"]
@@ -156,7 +156,7 @@ async def test_delete_order(client):
     access_token = login_response.json()["access_token"]
     response = client.get(
         "api/v1/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     user_id = response.json()['id']
     order_data = {
@@ -170,12 +170,12 @@ async def test_delete_order(client):
     order_response = client.post(
         "api/v1/orders/create",
         json=order_data,
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     order_id = order_response.json()["id"]
     response = client.delete(
         f"api/v1/orders/delete_order/{UUID(order_id)}",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
     assert "deleted" in response.json()

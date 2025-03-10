@@ -57,7 +57,7 @@ def test_get_me(client):
     access_token = login_response.json()["access_token"]
     response = client.get(
         "api/v1/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token}
     )
     assert response.status_code == 200
     assert response.json()["username"] == "newuser"
@@ -73,7 +73,7 @@ async def test_logout(client):
     access_token = login_response.json()["access_token"]
     response = client.post(
         "api/v1/auth/logout",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token}
     )
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
