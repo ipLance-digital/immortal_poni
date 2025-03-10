@@ -39,7 +39,7 @@ async def test_upload_file(client):
                     "application/octet-stream"
                 )
             },
-            headers={"Authorization": f"Bearer {access_token}"}
+            cookies={"access_token": access_token} 
         )
     assert response.status_code == 200
     response_data = response.json()
@@ -48,13 +48,13 @@ async def test_upload_file(client):
     file_id = response_data["message"]
     response = client.delete(
         f"api/v1/storage/delete/{UUID(file_id)}",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
     os.remove(tmp_path)
     response = client.post(
         "api/v1/auth/logout",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
 
@@ -70,7 +70,7 @@ async def test_rename_file(client):
     access_token = login_response.json()["access_token"]
     response = client.get(
         "api/v1/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     user_id = response.json()['id']
     file_content = b"Test file content"
@@ -87,23 +87,23 @@ async def test_rename_file(client):
                     "application/octet-stream"
                 )
             },
-            headers={"Authorization": f"Bearer {access_token}"}
+            cookies={"access_token": access_token} 
         )
     assert response.status_code == 200
     file_id = response.json()['message']
     response = client.patch(
         f"api/v1/storage/rename/{UUID(file_id)}?new_name={new_name}",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
     response = client.delete(
         f"api/v1/storage/delete/{UUID(file_id)}",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert "message" in response.json()
     response = client.post(
         "api/v1/auth/logout",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
 
@@ -118,7 +118,7 @@ async def test_delete_file(client):
     access_token = login_response.json()["access_token"]
     response = client.get(
         "api/v1/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     file_content = b"Test file content"
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
@@ -134,19 +134,19 @@ async def test_delete_file(client):
                     "application/octet-stream"
                 )
             },
-            headers={"Authorization": f"Bearer {access_token}"}
+            cookies={"access_token": access_token} 
         )
     assert response.status_code == 200
     file_id = response.json()['message']
     response = client.delete(
         f"api/v1/storage/delete/{UUID(file_id)}",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
     assert "message" in response.json()
     response = client.post(
         "api/v1/auth/logout",
-        headers={"Authorization": f"Bearer {access_token}"}
+        cookies={"access_token": access_token} 
     )
     assert response.status_code == 200
 
