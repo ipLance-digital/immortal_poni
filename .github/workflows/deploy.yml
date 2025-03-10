@@ -1,0 +1,41 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Connect to server and deploy
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e  # Остановить выполнение при ошибке
+
+            echo " Переход в рабочую директорию..."
+            cd /var/immortal_poni/dockers/immortal_poni
+
+            echo " Остановка старых контейнеров..."
+            docker compose down
+
+            echo "⬇ Обновление кода из репозитория..."
+            git pull 
+
+            echo " Очистка неиспользуемых данных Docker..."
+            docker system prune -a -f
+
+            echo " Сборка и запуск новых контейнеров..."
+            docker compose up -d
+
+            echo " Деплой завершён!"
