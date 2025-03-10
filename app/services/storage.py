@@ -1,23 +1,24 @@
 from datetime import datetime
 from uuid import UUID
 from uuid import uuid4
-import os
 import uuid
 
 from sqlalchemy import delete, select
 from supabase import create_client, Client
 from fastapi import HTTPException
 from typing import Optional
-from app.core.config import Settings
 from app.core.database import PgSingleton
 from app.models.files import Files
 import logging
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 supabase: Client = create_client(
-    Settings().SUPABASE_URL,
-    Settings().SUPABASE_KEY,
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_KEY"),
 )
-bucket_name = Settings().BUCKET_NAME
+bucket_name = os.getenv("BUCKET_NAME")
 
 
 class SupabaseStorage:

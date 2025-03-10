@@ -1,9 +1,9 @@
-version: "3.8"
+version: '3.8'
 
 services:
   web:
     build: .
-    container_name: immortal_poni_web
+    container_name: ipWeb
     ports:
       - "8000:8000"
     volumes:
@@ -12,24 +12,18 @@ services:
       - .env
     depends_on:
       - redis
-      - db
-
-  worker:
-    build: .
-    container_name: immortal_poni_worker
-    command: celery -A app.core.celery:celery_app worker --loglevel=info
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
+    environment:
+      - REDIS_HOST=redis
 
   flower:
     build: .
-    container_name: immortal_poni_flower
-    command: celery -A app.core.celery:celery_app flower --port=5555
+    container_name: ipFlower
+    command:
+      celery 
+        -A app.core.celery:celery_app 
+        flower 
+          --port=5555 
+          --address=0.0.0.0
     ports:
       - "5555:5555"
     volumes:
@@ -38,28 +32,36 @@ services:
       - .env
     depends_on:
       - redis
-      - db
+    environment:
+      - REDIS_HOST=redis
+
+  alpha_worker:
+    build: .
+    container_name: alpha_worker
+    command:
+      celery 
+        -A app.core.celery:celery_app worker 
+        --loglevel=info 
+        --concurrency=5 
+        -n "alpha_worker"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
 
   redis:
     image: redis:latest
-    container_name: immortal_poni_redis
+    container_name: ipRedis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-
-#  db:
-#    image: postgres:latest
-#    container_name: immortal_poni_db
-#    environment:
-#      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: your_db_password
-#      POSTGRES_DB: your_db_name
-#    ports:
-#      - "5432:5432"
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data
+    command: redis-server --maxclients 2000
 
 volumes:
   redis_data:
-  postgres_data:
