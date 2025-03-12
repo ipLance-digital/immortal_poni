@@ -87,6 +87,8 @@ https://supabase.com/dashboard/project/fbvupbfiavdrewoxrtwp
 
 ### Celery
 
+В модуле app/tasks/config_tasks выставляются настройки выполнения задач.
 
+- celery_app.conf.beat_schedule - выполнение периодических задач
 
 ---

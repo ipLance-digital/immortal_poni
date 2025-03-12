@@ -19,11 +19,7 @@ services:
     build: .
     container_name: ipFlower
     command:
-      celery 
-        -A app.core.celery:celery_app 
-        flower 
-          --port=5555 
-          --address=0.0.0.0
+      celery -A app.core.celery:celery_app flower --port=5555 --address=0.0.0.0
     ports:
       - "5555:5555"
     volumes:
@@ -35,15 +31,18 @@ services:
     environment:
       - REDIS_HOST=redis
 
-  alpha_worker:
+  celery_alpha_worker:
     build: .
-    container_name: alpha_worker
+    container_name: celery_alpha_worker
     command:
-      celery 
-        -A app.core.celery:celery_app worker 
-        --loglevel=info 
-        --concurrency=5 
-        -n "alpha_worker"
+      - celery
+      - -A
+      - app.core.celery:celery_app
+      - worker
+      - --loglevel=info
+      - --concurrency=5
+      - -n
+      - "alpha_worker"
     volumes:
       - .:/app
     env_file:
@@ -53,6 +52,68 @@ services:
     environment:
       - REDIS_HOST=redis
 
+# ПРИ НЕОБХОДИМОСТИ РАСШИРИТЬ ВОЗМОЖНОСТИ СЕЛЕРИ - ПОДНЯТЬ ЭТИХ ВОРКЕРОВ.
+#  heavy_task_worker:
+#    build: .
+#    container_name: heavy_task_worker
+#    command:
+#      - celery
+#      - -A
+#      - app.core.celery:celery_app
+#      - worker
+#      - --loglevel=info
+#      - --concurrency=3
+#      - -n
+#      - "heavy_task_worker"
+#    volumes:
+#      - .:/app
+#    env_file:
+#      - .env
+#    depends_on:
+#      - redis
+#    environment:
+#      - REDIS_HOST=redis
+
+#  low_priority_worker:
+#      build: .
+#      container_name: low_priority_worker
+#      command:
+#        - celery
+#        - -A
+#        - app.core.celery:celery_app
+#        - worker
+#        - --loglevel=info
+#        - --concurrency=2
+#        - -n
+#        - "low_priority_worker"
+#      volumes:
+#        - .:/app
+#      env_file:
+#        - .env
+#      depends_on:
+#        - redis
+#      environment:
+#        - REDIS_HOST=redis
+
+  celery_beat:
+    build: .
+    container_name: ipCeleryBeat
+    command:
+      - celery
+      - -A
+      - app.core.celery:celery_app
+      - beat
+      - --loglevel=info
+      - --scheduler=celery.beat.PersistentScheduler
+    volumes:
+      - .:/app
+      - ./app/tasks:/app/tasks
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
 
   redis:
     image: redis:latest

@@ -21,6 +21,15 @@ celery_app.conf.update(
     broker_connection_retry_on_startup=True,
 )
 
+# импорт селери модулей
 celery_app.conf.imports = (
     "app.tasks.default_tasks",
+    "app.tasks.celery_period_tasks",
+    "app.tasks.email_tasks",
+)
+
+# хранение celerybeat-schedule
+celery_app.conf.beat_schedule_filename = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)),
+    'tasks', 'celerybeat-schedule'
 )
