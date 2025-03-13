@@ -63,17 +63,21 @@ def test_get_me(client):
         json=login_data
     )
     assert login_response.status_code == 200
-    access_token = login_response.cookies.get("access_token")
+    cookies = {
+            "access_token": login_response.cookies.get("access_token"),
+            "refresh_token": login_response.cookies.get("refresh_token"),
+            "csrf_token": login_response.cookies.get("csrf_token")
+    }
     response = client.get(
         "api/v1/auth/me",
-        cookies={"access_token": access_token}
+        cookies=cookies,
+        headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")}
     )
     assert response.status_code == 200
     response_data = response.json()
     assert response_data["username"] == "newuser"
     assert "email" in response_data
     assert "id" in response_data
-
 
 @pytest.mark.asyncio
 async def test_logout(client):
@@ -84,10 +88,15 @@ async def test_logout(client):
     login_response = client.post("api/v1/auth/login", json=login_data)
     assert login_response.status_code == 200
     assert login_response.status_code == 200
-    access_token = login_response.cookies.get("access_token")
+    cookies = {
+            "access_token": login_response.cookies.get("access_token"),
+            "refresh_token": login_response.cookies.get("refresh_token"),
+            "csrf_token": login_response.cookies.get("csrf_token")
+    }
     response = client.post(
         "api/v1/auth/logout",
-        cookies={"access_token": access_token}
+        cookies=cookies,
+        headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
