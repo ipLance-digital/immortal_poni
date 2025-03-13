@@ -97,26 +97,25 @@ class OrdersApi(BaseApi):
         return order
 
     async def get_orders(
-        self, current_user: Users = Depends(get_current_user)
+            self,
+            page: int = 1,
+            page_size: int = 10,
     ) -> OrderList:
         """
-        Получение списка заказов,
+        Получение списка заказов с пагинацией,
         созданных или назначенных текущему пользователю.
         """
         try:
             async with self.db as db:
+                offset = (page - 1) * page_size
                 result = await db.execute(
                     select(Order)
-                    .where(
-                        or_(
-                            Order.created_by == current_user.id,
-                            Order.assign_to == current_user.id,
-                        )
-                    )
-                    .options(selectinload(Order.creator),
-                             selectinload(Order.assignee))
+                    .limit(page_size)
+                    .offset(offset)
                 )
+
                 orders = result.scalars().all()
+
             return OrderList(orders=orders)
         except Exception:
             raise HTTPException(
