@@ -1,5 +1,5 @@
-import asyncio
 import pytest
+import asyncio
 from app.tests.conftest import delete_user
 
 
@@ -12,7 +12,9 @@ def test_register_user(client):
     }
     response = client.post("api/v1/auth/register", json=user_data)
     assert response.status_code == 200
-    assert response.json()["username"] == user_data["username"]
+    response_data = response.json()
+    assert response_data["username"] == user_data["username"]
+    assert response_data["email"] == user_data["email"]
 
 
 def test_register_user_existing_username(client):
@@ -32,9 +34,13 @@ def test_login(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    response = client.post("api/v1/auth/login", data=login_data)
+    response = client.post("api/v1/auth/login", json=login_data)
     assert response.status_code == 200
-    assert "access_token" in response.json()
+    response_data = response.json()
+    assert "username" in response_data
+    assert response_data["username"] == "newuser"
+    assert "id" in response_data
+    assert "email" in response_data
 
 
 def test_login_invalid_credentials(client):
@@ -42,7 +48,7 @@ def test_login_invalid_credentials(client):
         "username": "newuser",
         "password": "wrongpassword"
     }
-    response = client.post("api/v1/auth/login", data=login_data)
+    response = client.post("api/v1/auth/login", json=login_data)
     assert response.status_code == 401
     assert response.json()["detail"] == "Incorrect username or password"
 
@@ -52,15 +58,22 @@ def test_get_me(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post(
+        "api/v1/auth/login",
+        json=login_data
+    )
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    access_token = login_response.cookies.get("access_token")
     response = client.get(
         "api/v1/auth/me",
         cookies={"access_token": access_token}
     )
     assert response.status_code == 200
-    assert response.json()["username"] == "newuser"
+    response_data = response.json()
+    assert response_data["username"] == "newuser"
+    assert "email" in response_data
+    assert "id" in response_data
+
 
 @pytest.mark.asyncio
 async def test_logout(client):
@@ -68,15 +81,17 @@ async def test_logout(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post("api/v1/auth/login", json=login_data)
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    assert login_response.status_code == 200
+    access_token = login_response.cookies.get("access_token")
     response = client.post(
         "api/v1/auth/logout",
         cookies={"access_token": access_token}
     )
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
+
 
 @pytest.mark.asyncio
 async def test_delete_test_user():
