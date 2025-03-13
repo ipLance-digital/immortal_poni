@@ -64,13 +64,6 @@ async def test_create_order(client):
     assert response.status_code == 200
     assert "deleted" in response.json()
 
-
-import os
-import tempfile
-from uuid import UUID
-
-import pytest
-
 @pytest.mark.asyncio
 async def test_attach_file_to_order(client):
     file_content = b"Test file content"
