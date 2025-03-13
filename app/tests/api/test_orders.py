@@ -23,9 +23,12 @@ async def test_create_order(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post(
+        "api/v1/auth/login",
+        json=login_data
+    )
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    access_token = login_response.cookies.get("access_token")
     response = client.get(
         "api/v1/auth/me",
         cookies={"access_token": access_token}
@@ -65,9 +68,12 @@ async def test_attach_file_to_order(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post(
+        "api/v1/auth/login",
+        json=login_data
+    )
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    access_token = login_response.cookies.get("access_token")
     response = client.get(
         "api/v1/auth/me",
         cookies={"access_token": access_token}
@@ -98,7 +104,7 @@ async def test_attach_file_to_order(client):
     file_id = response.json()["file_id"]
     response = client.delete(
         f"api/v1/orders/{UUID(order_id)}/delete_file/{UUID(file_id)}",
-        cookies={"access_token": access_token} 
+        cookies={"access_token": access_token}
     )
     assert response.status_code == 200
     os.remove(tmp_path)
@@ -114,9 +120,12 @@ async def test_update_order(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post(
+        "api/v1/auth/login",
+        json=login_data
+    )
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    access_token = login_response.cookies.get("access_token")
     response = client.get(
         "api/v1/auth/me",
         cookies={"access_token": access_token} 
@@ -151,9 +160,12 @@ async def test_delete_order(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post(
+        "api/v1/auth/login",
+        json=login_data
+    )
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    access_token = login_response.cookies.get("access_token")
     response = client.get(
         "api/v1/auth/me",
         cookies={"access_token": access_token} 
