@@ -26,9 +26,12 @@ async def test_upload_file(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post(
+        "api/v1/auth/login",
+        json=login_data
+    )
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    access_token = login_response.cookies.get("access_token")
     with open(tmp_path, "rb") as file:
         response = client.post(
             "api/v1/storage/upload",
@@ -65,9 +68,12 @@ async def test_rename_file(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post(
+        "api/v1/auth/login",
+        json=login_data
+    )
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    access_token = login_response.cookies.get("access_token")
     response = client.get(
         "api/v1/auth/me",
         cookies={"access_token": access_token} 
@@ -113,9 +119,12 @@ async def test_delete_file(client):
         "username": "newuser",
         "password": "newpassword"
     }
-    login_response = client.post("api/v1/auth/login", data=login_data)
+    login_response = client.post(
+        "api/v1/auth/login",
+        json=login_data
+    )
     assert login_response.status_code == 200
-    access_token = login_response.json()["access_token"]
+    access_token = login_response.cookies.get("access_token")
     response = client.get(
         "api/v1/auth/me",
         cookies={"access_token": access_token} 
