@@ -13,7 +13,6 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.database import PgSingleton
 from app.core.logger import logger
@@ -23,35 +22,52 @@ from app.core.security import (
     get_password_hash,
     is_token_blacklisted,
     set_token_cookie,
-    verify_password,
+    verify_password, create_refresh_token, create_csrf_token,
 )
 from app.models.users import Users
-from app.schemas.auth import Token, LoginRequest
+from app.schemas.auth import LoginRequest
 from app.schemas.users import UserCreate, UserResponse
-
 
 router = APIRouter()
 
-
 async def get_current_user(request: Request) -> Users:
-    token = request.cookies.get("access_token")
-    if not token:
+    access_token = request.cookies.get("access_token")
+    refresh_token = request.cookies.get("refresh_token")
+    csrf_token = request.cookies.get("csrf_token")
+
+    if not access_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Access token missing"
         )
-
-    if await is_token_blacklisted(token):
+    if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has been revoked",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Refresh token missing"
         )
-
+    if not csrf_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="CSRF token missing"
+        )
+    if csrf_token != request.headers.get("X-CSRF-TOKEN"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid CSRF token"
+        )
+    if await is_token_blacklisted(access_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token has been revoked"
+        )
+    if await is_token_blacklisted(refresh_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token has been revoked"
+        )
     try:
         payload = jwt.decode(
-            token,
+            access_token,
             os.getenv("SECRET_KEY"),
             algorithms=[os.getenv("ALGORITHM")],
         )
@@ -59,29 +75,24 @@ async def get_current_user(request: Request) -> Users:
         if username is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
+                detail="Could not validate credentials"
             )
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Could not validate credentials"
         )
-
     async with PgSingleton().session as db:
         user = await db.execute(
-            select(Users).where(Users.username.ilike(username))
+            select(Users).where(Users.username.ilike(username.lower()))
         )
         user = user.scalars().first()
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
+                detail="Could not validate credentials"
             )
         return user
-
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(
@@ -104,7 +115,6 @@ async def register_user(user: UserCreate):
                 status_code=400,
                 detail="Username already registered",
             )
-
         result = await db.execute(
             select(Users).where(Users.email == user.email)
         )
@@ -114,7 +124,6 @@ async def register_user(user: UserCreate):
                 status_code=400,
                 detail="Email already registered",
             )
-
         result = await db.execute(
             select(Users).where(Users.phone == user.phone)
         )
@@ -124,7 +133,6 @@ async def register_user(user: UserCreate):
                 status_code=400,
                 detail="Phone already registered",
             )
-
         hashed_password = get_password_hash(user.password)
         db_user = Users(
             username=user.username,
@@ -137,7 +145,7 @@ async def register_user(user: UserCreate):
         await db.refresh(db_user)
         return db_user
 
-@router.post("/login", response_model=UserResponse)
+@router.post("/login")
 async def login(
         login_data: LoginRequest,
         response: Response
@@ -156,10 +164,11 @@ async def login(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
-                headers={"WWW-Authenticate": "Bearer"},
             )
         access_token = create_access_token(data={"sub": user.username})
-        set_token_cookie(response, access_token)
+        refresh_token = create_refresh_token(data={"sub": user.username})
+        csrf_token = create_csrf_token()
+        set_token_cookie(response, access_token, refresh_token, csrf_token)
         return UserResponse.model_validate(user.__dict__)
 
 @router.post("/logout")
@@ -169,9 +178,6 @@ async def logout(
     current_user: Users = Depends(get_current_user),
 ):
     token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=400, detail="No token found")
-
     try:
         payload = jwt.decode(
             token,
@@ -187,5 +193,50 @@ async def logout(
                 return {"message": "Successfully logged out"}
     except JWTError:
         logger.warning(f"Invalid token for user {current_user.username}")
+    raise HTTPException(
+        status_code=400,
+        detail="Invalid token"
+    )
 
-    raise HTTPException(status_code=400, detail="Invalid token")
+@router.post("/refresh")
+async def refresh_access_token(
+        request: Request,
+        response: Response,
+):
+    refresh_token = request.cookies.get("refresh_token")
+    csrf_token = request.cookies.get("csrf_token")
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token missing",
+        )
+    if not csrf_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="CSRF token missing",
+        )
+    if await is_token_blacklisted(refresh_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token has been revoked",
+        )
+    try:
+        payload = jwt.decode(
+            refresh_token,
+            os.getenv("SECRET_KEY"),
+            algorithms=[os.getenv("ALGORITHM")],
+        )
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+    access_token = create_access_token(data={"sub": username})
+    set_token_cookie(response, access_token, refresh_token, csrf_token)
+    return f"Create access tocken for {username}"

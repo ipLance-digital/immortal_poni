@@ -74,7 +74,7 @@ class OrdersApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ) -> OrderBase:
         """
-        Создание нового заказа с возможностью назначения исполнителя.
+            Создание нового заказа с возможностью назначения исполнителя.
         """
         async with self.db as db:
             if data.assign_to and not await self.user_exists(db, data.assign_to):
@@ -97,24 +97,20 @@ class OrdersApi(BaseApi):
         return order
 
     async def get_orders(
-        self, current_user: Users = Depends(get_current_user)
+            self,
+            page: int = 1,
+            page_size: int = 10,
     ) -> OrderList:
         """
-        Получение списка заказов,
-        созданных или назначенных текущему пользователю.
+            Получение списка всех заказов с пагинацией
         """
         try:
             async with self.db as db:
+                offset = (page - 1) * page_size
                 result = await db.execute(
                     select(Order)
-                    .where(
-                        or_(
-                            Order.created_by == current_user.id,
-                            Order.assign_to == current_user.id,
-                        )
-                    )
-                    .options(selectinload(Order.creator),
-                             selectinload(Order.assignee))
+                    .limit(page_size)
+                    .offset(offset)
                 )
                 orders = result.scalars().all()
             return OrderList(orders=orders)
@@ -130,8 +126,8 @@ class OrdersApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ) -> OrderBase:
         """
-        Получение информации о конкретном заказе,
-        если он создан или назначен текущему пользователю.
+            Получение информации о конкретном заказе,
+            если он создан или назначен текущему пользователю.
         """
         async with self.db as db:
             query = (
@@ -164,7 +160,7 @@ class OrdersApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ) -> OrderBase:
         """
-        Обновление заказа, если он принадлежит текущему пользователю.
+            Обновление заказа, если он принадлежит текущему пользователю.
         """
         async with self.db as db:
             query = select(Order).where(
@@ -195,7 +191,7 @@ class OrdersApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ):
         """
-        Удаление заказа, если он принадлежит текущему пользователю.
+            Удаление заказа, если он принадлежит текущему пользователю.
         """
         async with self.db as db:
             query = select(Order).where(
@@ -219,7 +215,7 @@ class OrdersApi(BaseApi):
             current_user: Users = Depends(get_current_user),
     ):
         """
-        Прикрепить файл к заказу.
+            Прикрепить файл к заказу.
         """
         async with self.db as db:
             order = await db.execute(
@@ -261,7 +257,7 @@ class OrdersApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ):
         """
-        Удалить файл из заказа.
+            Удалить файл из заказа.
         """
         async with self.db as db:
             order = await db.execute(
