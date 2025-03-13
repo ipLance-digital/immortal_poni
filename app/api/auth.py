@@ -23,6 +23,7 @@ from app.core.security import (
     is_token_blacklisted,
     set_token_cookie,
     verify_password, create_refresh_token, create_csrf_token,
+    create_and_store_tokens,
 )
 from app.models.users import Users
 from app.schemas.auth import LoginRequest
@@ -165,10 +166,7 @@ async def login(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
             )
-        access_token = create_access_token(data={"sub": user.username})
-        refresh_token = create_refresh_token(data={"sub": user.username})
-        csrf_token = create_csrf_token()
-        set_token_cookie(response, access_token, refresh_token, csrf_token)
+        await create_and_store_tokens({"sub": user.username}, response)
         return UserResponse.model_validate(user.__dict__)
 
 @router.post("/logout")
