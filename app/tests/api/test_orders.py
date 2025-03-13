@@ -65,65 +65,80 @@ async def test_create_order(client):
     assert "deleted" in response.json()
 
 
+import os
+import tempfile
+from uuid import UUID
+
+import pytest
+
 @pytest.mark.asyncio
 async def test_attach_file_to_order(client):
     file_content = b"Test file content"
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
-        tmp.write(file_content)
-        tmp_path = tmp.name
-    login_data = {
-        "username": "newuser",
-        "password": "newpassword"
-    }
-    login_response = client.post(
-        "api/v1/auth/login",
-        json=login_data
-    )
-    cookies = {
-        "access_token": login_response.cookies.get("access_token"),
-        "refresh_token": login_response.cookies.get("refresh_token"),
-        "csrf_token": login_response.cookies.get("csrf_token")
-    }
-    assert login_response.status_code == 200
-    response = client.get(
-        "api/v1/auth/me",
-        cookies=cookies,
-        headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
-    )
-    user_id = response.json()['id']
-    order_data = {
-        "name": "New Order with File",
-        "body": "Order details with file",
-        "price": 100,
-        "status": 1,
-        "assign_to": user_id,
-        "deadline": "2050-01-01T10:11:50",
-    }
-    order_response = client.post(
-        "api/v1/orders/create",
-        json=order_data,
-        cookies=cookies,
-        headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
-    )
-    order_id = order_response.json()["id"]
-    with open(tmp_path, "rb") as file:
-        response = client.post(
-            f"api/v1/orders/{UUID(order_id)}/attach_file",
-            files={"file": (
-            os.path.basename(tmp_path), file, "application/octet-stream")},
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(file_content)
+            tmp_path = tmp.name
+
+        login_data = {
+            "username": "newuser",
+            "password": "newpassword"
+        }
+        login_response = client.post(
+            "api/v1/auth/login",
+            json=login_data
+        )
+        cookies = {
+            "access_token": login_response.cookies.get("access_token"),
+            "refresh_token": login_response.cookies.get("refresh_token"),
+            "csrf_token": login_response.cookies.get("csrf_token")
+        }
+        assert login_response.status_code == 200
+
+        response = client.get(
+            "api/v1/auth/me",
             cookies=cookies,
             headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
         )
-    assert response.status_code == 200
-    file_id = response.json()["file_id"]
-    response = client.delete(
-        f"api/v1/orders/{UUID(order_id)}/delete_file/{UUID(file_id)}",
-        cookies=cookies,
-        headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
-    )
-    assert response.status_code == 200
-    os.remove(tmp_path)
+        user_id = response.json()['id']
 
+        order_data = {
+            "name": "New Order with File",
+            "body": "Order details with file",
+            "price": 100,
+            "status": 1,
+            "assign_to": user_id,
+            "deadline": "2050-01-01T10:11:50",
+        }
+        order_response = client.post(
+            "api/v1/orders/create",
+            json=order_data,
+            cookies=cookies,
+            headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
+        )
+        order_id = order_response.json()["id"]
+
+        with open(tmp_path, "rb") as file:
+            response = client.post(
+                f"api/v1/orders/{UUID(order_id)}/attach_file",
+                files={"file": (
+                    os.path.basename(tmp_path), file, "application/octet-stream"
+                )},
+                cookies=cookies,
+                headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
+            )
+        assert response.status_code == 200
+        file_id = response.json()["file_id"]
+
+        response = client.delete(
+            f"api/v1/orders/{UUID(order_id)}/delete_file/{UUID(file_id)}",
+            cookies=cookies,
+            headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
+        )
+        assert response.status_code == 200
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 @pytest.mark.asyncio
 async def test_update_order(client):
