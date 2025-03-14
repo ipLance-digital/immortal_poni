@@ -116,13 +116,6 @@ async def store_csrf_token(user_id: str, csrf_token: str):
         raise e
 
 
-async def verify_csrf_token(user_id: str, csrf_token: str) -> bool:
-    """Проверка CSRF-токена."""
-    redis_client = await RedisSingleton().redis_client
-    key = f"csrf:{user_id}:{csrf_token}"
-    return await redis_client.exists(key) == 1
-
-
 async def create_and_store_tokens(user_data: dict, response: Response) -> dict:
     """Генерация и установка всех токенов."""
     access_token = create_access_token(user_data)
