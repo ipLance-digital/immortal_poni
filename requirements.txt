@@ -74,7 +74,6 @@ supafunc==0.9.3
 tornado==6.4.2
 typing_extensions==4.12.2
 tzdata==2025.1
-uv==0.6.5
 uvicorn==0.34.0
 vine==5.1.0
 wcwidth==0.2.13

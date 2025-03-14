@@ -107,7 +107,6 @@ services:
       - --scheduler=celery.beat.PersistentScheduler
     volumes:
       - .:/app
-      - ./app/tasks:/app/tasks
     env_file:
       - .env
     depends_on:

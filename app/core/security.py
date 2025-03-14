@@ -104,26 +104,12 @@ async def is_token_blacklisted(token: str) -> bool:
     return await redis_client.exists(token) == 1
 
 
-async def store_csrf_token(user_id: str, csrf_token: str):
-    """Сохранение CSRF-токена в Redis с привязкой к пользователю."""
-    try:
-        client = await RedisSingleton().redis_client
-        if not client:
-            raise Exception("Redis client is not initialized")
-        key = f"csrf:{user_id}:{csrf_token}"
-        await client.setex(key, CSRF_TOKEN_EXPIRE_MINUTES * 60, "valid")
-    except Exception as e:
-        raise e
-
-
 async def create_and_store_tokens(user_data: dict, response: Response) -> dict:
     """Генерация и установка всех токенов."""
     access_token = create_access_token(user_data)
     refresh_token = create_refresh_token(user_data)
     csrf_token = create_csrf_token()
     set_token_cookie(response, access_token, refresh_token, csrf_token)
-
-    await store_csrf_token(user_data.get("sub", "unknown"), csrf_token)
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
