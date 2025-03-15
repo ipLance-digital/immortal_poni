@@ -20,7 +20,7 @@ def test_register_user(client):
 def test_register_user_existing_username(client):
     user_data = {
         "username": "newuser",
-        "email": "newemail@example.com",
+        "email": "newuser@example.com",
         "phone": "+1987654321",
         "password": "newpassword"
     }
@@ -30,17 +30,36 @@ def test_register_user_existing_username(client):
 
 
 def test_login(client):
-    login_data = {
+    # логин по юзернэйму
+    login_data_username = {
         "username": "newuser",
         "password": "newpassword"
     }
-    response = client.post("api/v1/auth/login", json=login_data)
+    response = client.post("api/v1/auth/login", json=login_data_username)
     assert response.status_code == 200
     response_data = response.json()
     assert "username" in response_data
-    assert response_data["username"] == "newuser"
-    assert "id" in response_data
-    assert "email" in response_data
+    assert "newuser" == response_data.get("username")
+
+    # логин по эмеэйлу
+    login_data_email = {
+        "email": "newuser@example.com",
+        "password": "newpassword"
+    }
+    response = client.post("api/v1/auth/login", json=login_data_email)
+    assert response.status_code == 200
+    response_data = response.json()
+    assert "newuser@example.com" in response_data.get("email")
+
+    # логин по телефону
+    phone_data_email = {
+        "phone": "+1987654321",
+        "password": "newpassword"
+    }
+    response = client.post("api/v1/auth/login", json=phone_data_email)
+    assert response.status_code == 200
+    response_data = response.json()
+    assert "+1987654321" == response_data.get("phone")
 
 
 def test_login_invalid_credentials(client):

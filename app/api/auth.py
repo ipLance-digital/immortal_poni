@@ -1,6 +1,5 @@
 from typing import Annotated
 from datetime import datetime, UTC
-
 import os
 from jose import JWTError, jwt
 from sqlalchemy import func
@@ -13,7 +12,6 @@ from fastapi import (
     Response,
     status,
 )
-
 from app.core.database import PgSingleton
 from app.core.logger import logger
 from app.core.security import (
@@ -152,11 +150,18 @@ async def login(
         response: Response
 ):
     async with PgSingleton().session as db:
-        result = await db.execute(
-            select(Users).where(
-                func.lower(Users.username) == func.lower(login_data.username)
+        if login_data.username:
+            result = await db.execute(
+                select(Users).where(func.lower(Users.username) == func.lower(login_data.username))
             )
-        )
+        elif login_data.email:
+            result = await db.execute(
+                select(Users).where(func.lower(Users.email) == func.lower(login_data.email))
+            )
+        else:
+            result = await db.execute(
+                select(Users).where(Users.phone == login_data.phone)
+            )
         user = result.scalars().first()
         if not user or not verify_password(
                 login_data.password,
@@ -236,5 +241,10 @@ async def refresh_access_token(
             detail="Invalid refresh token",
         )
     access_token = create_access_token(data={"sub": username})
-    set_token_cookie(response, access_token, refresh_token, csrf_token)
+    set_token_cookie(
+        response,
+        access_token,
+        refresh_token,
+        csrf_token
+    )
     return f"Create access tocken for {username}"

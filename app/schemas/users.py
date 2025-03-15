@@ -33,6 +33,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: UUID
+    phone: str
     created_at: datetime
 
     class ConfigDict:

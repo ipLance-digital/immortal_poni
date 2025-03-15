@@ -1,5 +1,6 @@
 import redis.asyncio as redis
 import os
+import logging
 
 
 class RedisSingleton:
@@ -13,22 +14,29 @@ class RedisSingleton:
 
     async def init_redis(self):
         if self._redis_client is None:
-            self._redis_client = await redis.Redis(
-                host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", 6379)),
-                password=os.getenv("REDIS_PASSWORD", ""),
-                username=os.getenv("REDIS_USERNAME", ""),
-                db=int(os.getenv("REDIS_DB", 0)),
-            )
+            try:
+                self._redis_client = await redis.Redis(
+                    host=os.getenv("REDIS_HOST", "localhost"),
+                    port=int(os.getenv("REDIS_PORT", 6379)),
+                    password=os.getenv("REDIS_PASSWORD", ""),
+                    username=os.getenv("REDIS_USERNAME", ""),
+                    db=int(os.getenv("REDIS_DB", 0)),
+                    ssl=os.getenv("REDIS_SSL", "false").lower() == "true"
+                )
+            except Exception as e:
+                raise ConnectionError("Не удалось подключиться к Redis")
 
     async def close_redis(self):
         if self._redis_client:
-            await self._redis_client.aclose()
-            self._redis_client = None
-            print("Redis connection closed.")
+            try:
+                await self._redis_client.aclose()
+                self._redis_client = None
+                logging.info("Redis соединение закрыто.")
+            except Exception as e:
+                logging.error(f"Ошибка при закрытии соединения с Redis: {e}")
 
     @property
-    def redis_client(self) -> redis.Redis:
+    async def redis_client(self) -> redis.Redis:
         if self._redis_client is None:
-            raise ValueError("Redis не инициализирован")
+            await self.init_redis()
         return self._redis_client

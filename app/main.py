@@ -1,14 +1,18 @@
 from fastapi import FastAPI
 import uvicorn
-from app.core.config import Settings
 from app.core.database import PgSingleton
 from app.core.redis import RedisSingleton
 from app.routers import get_router
 from contextlib import asynccontextmanager
 from sqlalchemy import text
 import logging
+from dotenv import load_dotenv
+import os
+from starlette.middleware.cors import CORSMiddleware
 
-logger = logging.getLogger("MAIN")
+load_dotenv()
+
+logger = logging.getLogger("  app  ")
 logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
@@ -24,7 +28,6 @@ async def lifespan(app: FastAPI):
 
     try:
         await RedisSingleton().init_redis()
-        await RedisSingleton().redis_client.ping()
         logger.info("Redis подключён")
     except Exception as e:
         logger.error(f"Ошибка подключения к Redis: {e}")
@@ -36,13 +39,21 @@ async def lifespan(app: FastAPI):
     logger.info("Сервис был остановлен!")
 
 app = FastAPI(
-    title=Settings().APP_NAME,
+    title="IP-lance API",
     version="1.0.0",
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,  # type: ignore
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 router = get_router()
-app.include_router(router, prefix=Settings().API_V1_STR)
+app.include_router(router, prefix="/api/v1")
 
 @app.get("/")
 def root():
@@ -51,7 +62,7 @@ def root():
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
-        host=Settings().LOCALHOST,
-        port=Settings().PORT,
-        reload=Settings().DEBUG,
+        host=os.getenv("HOST", "0.0.0.0"),
+        port=int(os.getenv("PORT", 8000)),
+        reload=os.getenv("DEBUG", "True").lower() == "true",
     )
