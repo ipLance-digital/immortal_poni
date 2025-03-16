@@ -49,11 +49,16 @@ jobs:
             echo " Переход в рабочую директорию..."
             cd /var/immortal_poni/dockers/immortal_poni
 
+            echo " Запись переменных окружения из ENV_FILE..."
+            echo "${{ secrets.ENV_FILE }}" > .env
+            echo " Проверка содержимого .env..."
+            cat .env
+
             echo " Остановка старых контейнеров..."
             docker compose down
 
             echo "⬇ Обновление кода из репозитория..."
-            git pull 
+            git pull || git fetch --all && git reset --hard origin/main
 
             echo " Очистка неиспользуемых данных Docker..."
             docker system prune -a -f
