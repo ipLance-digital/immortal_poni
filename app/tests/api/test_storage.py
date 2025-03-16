@@ -19,7 +19,7 @@ async def test_register_user(client):
 @pytest.mark.asyncio
 async def test_upload_file(client):
     file_content = b"Test file content"
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(dir="", delete=False) as tmp:
         tmp.write(file_content)
         tmp_path = tmp.name
     login_data = {
@@ -92,7 +92,7 @@ async def test_rename_file(client):
     )
     user_id = response.json()['id']
     file_content = b"Test file content"
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(dir="", delete=False) as tmp:
         tmp.write(file_content)
         tmp_path = tmp.name
     with open(tmp_path, "rb") as file:
@@ -128,6 +128,7 @@ async def test_rename_file(client):
         headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
     assert response.status_code == 200
+    os.remove(tmp_path)
 
 @pytest.mark.asyncio
 async def test_delete_file(client):
@@ -151,7 +152,7 @@ async def test_delete_file(client):
         headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
     file_content = b"Test file content"
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(dir="", delete=False) as tmp:
         tmp.write(file_content)
         tmp_path = tmp.name
     with open(tmp_path, "rb") as file:
@@ -182,6 +183,7 @@ async def test_delete_file(client):
         headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
     assert response.status_code == 200
+    os.remove(tmp_path)
 
 @pytest.mark.asyncio
 async def test_delete_test_user():

@@ -67,10 +67,6 @@ async def test_create_order(client):
 
 @pytest.mark.asyncio
 async def test_attach_file_to_order(client):
-    file_content = b"Test file content"
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
-        tmp.write(file_content)
-        tmp_path = tmp.name
     login_data = {
         "username": "newuser",
         "password": "newpassword"
@@ -105,6 +101,10 @@ async def test_attach_file_to_order(client):
         cookies=cookies,
         headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
+    file_content = b"Test file content"
+    with tempfile.NamedTemporaryFile(dir="", delete=False) as tmp:
+        tmp.write(file_content)
+        tmp_path = tmp.name
     order_id = order_response.json()["id"]
     with open(tmp_path, "rb") as file:
         response = client.post(
@@ -123,6 +123,8 @@ async def test_attach_file_to_order(client):
     )
     assert response.status_code == 200
     os.remove(tmp_path)
+    if os.path.isdir('temp'):
+        os.rmdir('temp')
 
 
 @pytest.mark.asyncio
@@ -130,7 +132,6 @@ async def test_update_order(client):
     update_data = {
         "price": 200,
     }
-
     login_data = {
         "username": "newuser",
         "password": "newpassword"

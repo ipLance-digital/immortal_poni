@@ -1,12 +1,128 @@
-version: "3.8"
+version: '3.8'
 
 services:
   web:
     build: .
-    container_name: immortal_poni_web
+    container_name: ipWeb
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     env_file:
       - .env
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  flower:
+    build: .
+    container_name: ipFlower
+    command:
+      celery -A app.core.celery:celery_app flower --port=5555 --address=0.0.0.0
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  celery_alpha_worker:
+    build: .
+    container_name: celery_alpha_worker
+    command:
+      - celery
+      - -A
+      - app.core.celery:celery_app
+      - worker
+      - --loglevel=info
+      - --concurrency=5
+      - -n
+      - "alpha_worker"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+# ПРИ НЕОБХОДИМОСТИ РАСШИРИТЬ ВОЗМОЖНОСТИ СЕЛЕРИ - ПОДНЯТЬ ЭТИХ ВОРКЕРОВ.
+#  heavy_task_worker:
+#    build: .
+#    container_name: heavy_task_worker
+#    command:
+#      - celery
+#      - -A
+#      - app.core.celery:celery_app
+#      - worker
+#      - --loglevel=info
+#      - --concurrency=3
+#      - -n
+#      - "heavy_task_worker"
+#    volumes:
+#      - .:/app
+#    env_file:
+#      - .env
+#    depends_on:
+#      - redis
+#    environment:
+#      - REDIS_HOST=redis
+
+#  low_priority_worker:
+#      build: .
+#      container_name: low_priority_worker
+#      command:
+#        - celery
+#        - -A
+#        - app.core.celery:celery_app
+#        - worker
+#        - --loglevel=info
+#        - --concurrency=2
+#        - -n
+#        - "low_priority_worker"
+#      volumes:
+#        - .:/app
+#      env_file:
+#        - .env
+#      depends_on:
+#        - redis
+#      environment:
+#        - REDIS_HOST=redis
+
+  celery_beat:
+    build: .
+    container_name: ipCeleryBeat
+    command:
+      - celery
+      - -A
+      - app.core.celery:celery_app
+      - beat
+      - --loglevel=info
+      - --scheduler=celery.beat.PersistentScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  redis:
+    image: redis:latest
+    container_name: ipRedis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --maxclients 2000
+
+volumes:
+  redis_data:
