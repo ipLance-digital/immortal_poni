@@ -1,5 +1,28 @@
 version: '3.8'
 
+# Общие переменные окружения для всех сервисов
+x-common-environment: &common-environment
+  REDIS_HOST: redis
+  DATABASE_URL: ${DATABASE_URL}
+  DB_PASSWORD: ${DB_PASSWORD}
+  SUPABASE_URL: ${SUPABASE_URL}
+  SUPABASE_KEY: ${SUPABASE_KEY}
+  BUCKET_NAME: ${BUCKET_NAME}
+  REDIS_PORT: ${REDIS_PORT}
+  REDIS_DB: ${REDIS_DB}
+  REDIS_USERNAME: ${REDIS_USERNAME}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  CELERY_TIMEZONE: ${CELERY_TIMEZONE}
+  CELERY_ENABLE_UTC: ${CELERY_ENABLE_UTC}
+  SECRET_KEY: ${SECRET_KEY}
+  ALGORITHM: ${ALGORITHM}
+  ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+  LOCALHOST: ${LOCALHOST}
+  PORT: ${PORT}
+  PYTHONPATH: ${PYTHONPATH}
+
 services:
   web:
     build: .
@@ -8,12 +31,10 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-    env_file:
-      - .env
     depends_on:
       - redis
     environment:
-      - REDIS_HOST=redis
+      <<: *common-environment
 
   flower:
     build: .
@@ -24,12 +45,10 @@ services:
       - "5555:5555"
     volumes:
       - .:/app
-    env_file:
-      - .env
     depends_on:
       - redis
     environment:
-      - REDIS_HOST=redis
+      <<: *common-environment
 
   celery_alpha_worker:
     build: .
@@ -45,55 +64,10 @@ services:
       - "alpha_worker"
     volumes:
       - .:/app
-    env_file:
-      - .env
     depends_on:
       - redis
     environment:
-      - REDIS_HOST=redis
-
-# ПРИ НЕОБХОДИМОСТИ РАСШИРИТЬ ВОЗМОЖНОСТИ СЕЛЕРИ - ПОДНЯТЬ ЭТИХ ВОРКЕРОВ.
-#  heavy_task_worker:
-#    build: .
-#    container_name: heavy_task_worker
-#    command:
-#      - celery
-#      - -A
-#      - app.core.celery:celery_app
-#      - worker
-#      - --loglevel=info
-#      - --concurrency=3
-#      - -n
-#      - "heavy_task_worker"
-#    volumes:
-#      - .:/app
-#    env_file:
-#      - .env
-#    depends_on:
-#      - redis
-#    environment:
-#      - REDIS_HOST=redis
-
-#  low_priority_worker:
-#      build: .
-#      container_name: low_priority_worker
-#      command:
-#        - celery
-#        - -A
-#        - app.core.celery:celery_app
-#        - worker
-#        - --loglevel=info
-#        - --concurrency=2
-#        - -n
-#        - "low_priority_worker"
-#      volumes:
-#        - .:/app
-#      env_file:
-#        - .env
-#      depends_on:
-#        - redis
-#      environment:
-#        - REDIS_HOST=redis
+      <<: *common-environment
 
   celery_beat:
     build: .
@@ -107,12 +81,10 @@ services:
       - --scheduler=celery.beat.PersistentScheduler
     volumes:
       - .:/app
-    env_file:
-      - .env
     depends_on:
       - redis
     environment:
-      - REDIS_HOST=redis
+      <<: *common-environment
 
   redis:
     image: redis:latest
