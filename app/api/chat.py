@@ -1,0 +1,270 @@
+from app.tasks.notifications import send_notification
+from fastapi import Depends, HTTPException, status, WebSocket, WebSocketDisconnect, UploadFile, File
+from sqlalchemy import select
+from uuid import UUID
+from typing import List
+import json
+from app.api.storage import upload_file
+from app.core.redis import RedisSingleton
+from app.models.chat import Chat, Message
+from app.models.users import Users
+from app.schemas.chat import ChatOut, MessageOut
+from app.api.auth import get_current_user
+from app.api.base import BaseApi
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class ChatApi(BaseApi):
+    def __init__(self):
+        super().__init__()
+        self.router.add_api_route(
+            "",
+            self.create_chat,
+            methods=["POST"],
+            response_model=ChatOut,
+            status_code=status.HTTP_201_CREATED,
+        )
+        self.router.add_api_route(
+            "",
+            self.get_chats,
+            methods=["GET"],
+            response_model=List[ChatOut],
+        )
+        self.router.add_api_route(
+            "/{chat_id}/messages",
+            self.get_messages,
+            methods=["GET"],
+            response_model=List[MessageOut],
+        )
+        self.router.add_api_route(
+            "/upload-file",
+            self.upload_chat_file,
+            methods=["POST"],
+            response_model=dict,
+        )
+        self.router.add_websocket_route(
+            "/ws/chat/{chat_id}",
+            self.websocket_endpoint,
+        )
+        self.redis_client = RedisSingleton().redis_client
+
+    async def create_chat(
+        self,
+        customer_id: UUID,
+        performer_id: UUID,
+        current_user: Users = Depends(get_current_user),
+    ) -> ChatOut:
+        """
+            Создание нового чата между заказчиком и исполнителем.
+            Args:
+                customer_id: UUID заказчика
+                performer_id: UUID исполнителя
+                current_user: Авторизованный пользователь
+            Returns:
+                ChatOut: Созданный чат
+            Raises:
+                HTTPException: Если пользователь не имеет прав или участники не найдены
+        """
+        if current_user.id not in [customer_id, performer_id]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only create a chat if "
+                       "you are a customer or performer",
+            )
+        async with self.db as db:
+            customer = await db.execute(
+                select(Users).where(Users.id == customer_id)
+            )
+            customer = customer.scalars().first()
+            if not customer:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Customer not found",
+                )
+            performer = await db.execute(
+                select(Users).where(Users.id == performer_id)
+            )
+            performer = performer.scalars().first()
+            if not performer:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Performer not found",
+                )
+            existing_chat = await db.execute(
+                select(Chat).where(
+                    (Chat.customer_id == customer_id) &
+                    (Chat.performer_id == performer_id)
+                )
+            )
+            existing_chat = existing_chat.scalars().first()
+            if existing_chat:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Chat between these users already exists",
+                )
+            chat = Chat(
+                customer_id=customer_id,
+                performer_id=performer_id
+            )
+            db.add(chat)
+            await self.update_db(db, chat)
+        return chat
+
+    async def get_chats(
+        self,
+        current_user: Users = Depends(get_current_user),
+    ) -> List[ChatOut]:
+        """
+            Получение списка чатов текущего пользователя.
+            Args:
+                current_user: Авторизованный пользователь
+            Returns:
+                List[ChatOut]: Список чатов
+        """
+        async with self.db as db:
+            chats = await db.execute(
+                select(Chat).where(
+                    (Chat.customer_id == current_user.id) |
+                    (Chat.performer_id == current_user.id)
+                )
+            )
+            chats = chats.scalars().all()
+        return chats
+
+    async def get_messages(
+        self,
+        chat_id: UUID,
+        skip: int = 0,
+        limit: int = 50,
+        current_user: Users = Depends(get_current_user),
+    ) -> List[MessageOut]:
+        """
+            Получение сообщений в чате с пагинацией.
+            Args:
+                chat_id: UUID чата
+                skip: Пропуск записей
+                limit: Лимит записей
+                current_user: Авторизованный пользователь
+
+            Returns:
+                List[MessageOut]: Список сообщений
+            Raises:
+                HTTPException: Если чат не найден или пользователь не имеет доступа
+        """
+        async with self.db as db:
+            chat = await db.execute(select(Chat).where(
+                Chat.id == chat_id)
+            )
+            chat = chat.scalars().first()
+            if not chat:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Chat not found",
+                )
+
+            if current_user.id not in [chat.customer_id, chat.performer_id]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have access to this chat",
+                )
+
+            messages = await db.execute(
+                select(Message)
+                .where(Message.chat_id == chat_id)
+                .offset(skip)
+                .limit(limit)
+            )
+            messages = messages.scalars().all()
+        return messages
+
+    async def upload_chat_file(
+        self,
+        file: UploadFile = File(...),
+        current_user: Users = Depends(get_current_user),
+    ) -> dict:
+        """
+            Загрузка файла для чата.
+            Args:
+                file: Загружаемый файл
+                current_user: Авторизованный пользователь
+            Returns:
+                dict: Ссылка на загруженный файл
+        """
+        file_url = await upload_file(file)
+        return {"file_url": file_url}
+
+    async def websocket_endpoint(
+        self,
+        websocket: WebSocket,
+        chat_id: UUID,
+        token: str,
+        current_user: Users = Depends(get_current_user),
+    ):
+        """
+        WebSocket для обмена сообщениями в чате.
+
+        Args:
+            websocket: WebSocket соединение
+            chat_id: UUID чата
+            token: Токен авторизации
+        """
+        async with self.db as db:
+            if not current_user:
+                await websocket.close(code=1008)
+                return
+
+            chat = await db.execute(select(Chat).where(Chat.id == chat_id))
+            chat = chat.scalars().first()
+            if not chat:
+                await websocket.close(code=1008)
+                return
+
+            if user.id not in [chat.customer_id, chat.performer_id]:
+                await websocket.close(code=1008)
+                return
+
+        await websocket.accept()
+
+        pubsub = self.redis_client.pubsub()
+        await pubsub.subscribe(f"chat:{chat_id}")
+
+        async def listen_to_redis():
+            async for message in pubsub.listen():
+                if message["type"] == "message":
+                    await websocket.send_text(message["data"].decode())
+
+        import asyncio
+        asyncio.create_task(listen_to_redis())
+
+        try:
+            while True:
+                data = await websocket.receive_text()
+                message_data = json.loads(data)
+                async with self.db as db:
+                    message = Message(
+                        chat_id=chat_id,
+                        sender_id=user.id,
+                        content=message_data.get("content"),
+                        file_url=message_data.get("file_url"),
+                    )
+                    db.add(message)
+                    await self.update_db(db, message)
+
+                message_payload = {
+                    "sender_id": str(user.id),
+                    "content": message.content,
+                    "file_url": message.file_url,
+                    "created_at": message.created_at.isoformat(),
+                }
+                await self.redis_client.publish(f"chat:{chat_id}", json.dumps(message_payload))
+
+                # Если другой участник оффлайн, отправляем уведомление через Celery
+                other_user_id = chat.performer_id if user.id == chat.customer_id else chat.customer_id
+                # Проверяем, есть ли активные WebSocket подключения для другого пользователя
+                # В данном случае мы упрощаем, отправляя уведомление всегда, если нужно — добавьте проверку
+                send_notification.delay(str(chat_id), message.content)
+
+        except WebSocketDisconnect:
+            await pubsub.unsubscribe(f"chat:{chat_id}")
+            await self.redis_client.close()

@@ -66,6 +66,9 @@ class Users(Base):
     orders_assigned = relationship(
         "Order", foreign_keys="Order.assign_to", back_populates="assignee"
     )
+    chats = relationship(
+        "Chat", secondary="chat_participants", back_populates="participants"
+    )
 
 
 class UserSkills(Base):
