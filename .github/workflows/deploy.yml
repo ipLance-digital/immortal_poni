@@ -46,24 +46,24 @@ jobs:
           script: |
             set -e  # Остановить выполнение при ошибке
 
-            echo " Переход в рабочую директорию..."
+            echo "Переход в рабочую директорию..."
             cd /var/immortal_poni/dockers/immortal_poni
 
-            echo " Запись переменных окружения из ENV_FILE..."
+            echo "Запись переменных окружения из ENV_FILE..."
             echo "${{ secrets.ENV_FILE }}" > .env
-            echo " Проверка содержимого .env..."
+            echo "Проверка содержимого .env..."
             cat .env
 
-            echo " Остановка старых контейнеров..."
+            echo "Остановка старых контейнеров..."
             docker compose down
 
             echo "⬇ Обновление кода из репозитория..."
             git pull || git fetch --all && git reset --hard origin/main
 
-            echo " Очистка неиспользуемых данных Docker..."
+            echo "Очистка неиспользуемых данных Docker..."
             docker system prune -a -f
 
-            echo " Сборка и запуск новых контейнеров..."
+            echo "Сборка и запуск новых контейнеров..."
             docker compose up -d
 
-            echo " Деплой завершён!"
+            echo "Деплой завершён!"

@@ -7,6 +7,7 @@ from app.models.base_model import Base
 from app.models.users import Users
 from app.models.orders import Order
 from app.models.files import Files
+from app.models.chat import Chat
 
 load_dotenv()
 
