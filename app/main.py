@@ -59,23 +59,6 @@ app.include_router(router, prefix="/api/v1")
 def root():
     return {"message": "Welcome to IP-lance"}
 
-
-@app.websocket('/ws/test')
-async def aaa(websocket: WebSocket):
-    await websocket.accept()
-    print("Client connected")
-
-    try:
-        while True:
-            # Получаем сообщение от клиента
-            data = await websocket.receive_text()
-            print(f"Received message: {data}")
-
-            # Отправляем обратно сообщение
-            await websocket.send_text(f"Hello, you said: {data}")
-    except WebSocketDisconnect:
-        print("Client disconnected")
-
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",

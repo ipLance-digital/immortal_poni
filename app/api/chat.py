@@ -1,5 +1,12 @@
-from app.tasks.notifications import send_notification
-from fastapi import Depends, HTTPException, status, WebSocket, WebSocketDisconnect, UploadFile, File
+from fastapi import (
+    Depends,
+    HTTPException,
+    status,
+    WebSocket,
+    WebSocketDisconnect,
+    UploadFile,
+    File,
+)
 from sqlalchemy import select
 from uuid import UUID
 from typing import List
@@ -43,14 +50,8 @@ class ChatApi(BaseApi):
             methods=["POST"],
             response_model=dict,
         )
-        self.router.websocket(
-            "/ws/test",
-            # "/ws/chat/{chat_id}",
-        )
         self.redis_client = RedisSingleton().redis_client
 
-    async def a(self):
-        return 11
 
     async def create_chat(
         self,
@@ -196,54 +197,3 @@ class ChatApi(BaseApi):
         """
         file_url = await upload_file(file)
         return {"file_url": file_url}
-
-    async def websocket_endpoint(
-        self,
-        websocket: WebSocket,
-        chat_id: UUID,
-        current_user: Users = Depends(get_current_user)
-    ):
-        """
-        WebSocket эндпоинт для реального общения в чате.
-        Проверка прав пользователя перед подключением.
-        """
-        # Принятие подключения WebSocket
-        await websocket.accept()
-
-        # Проверка существования чата и прав доступа пользователя
-        async with self.db as db:
-            chat = await db.execute(select(Chat).where(Chat.id == chat_id))
-            chat = chat.scalars().first()
-
-            if not chat:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Чат не найден")
-
-            # Проверка прав доступа
-            if current_user.id not in [chat.customer_id, chat.performer_id]:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="У вас нет доступа к этому чату")
-
-        try:
-            # Бесконечный цикл для получения сообщений от клиента
-            while True:
-                data = await websocket.receive_text()
-
-                # Сохранение сообщения в БД
-                message = Message(
-                    chat_id=chat_id,
-                    sender_id=current_user.id,
-                    content=data
-                )
-                async with self.db as db:
-                    db.add(message)
-                    await self.update_db(db, message)
-
-                # Отправка сообщения обратно клиенту
-                message_out = MessageOut(id=message.id, sender_id=current_user.id, content=message.content)
-                await websocket.send_text(json.dumps(message_out.dict()))
-
-                # Также можно сохранить сообщение в Redis для быстрой выборки
-                await self.redis_client.set(f"chat:{chat_id}:message:{message.id}", json.dumps(message_out.dict()))
-
-        except WebSocketDisconnect:
-            print(f"Пользователь {current_user.id} отключился от чата {chat_id}")
-            await websocket.close()

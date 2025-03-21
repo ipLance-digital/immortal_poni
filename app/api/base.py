@@ -1,10 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, FastAPI
 from uuid import UUID
 
 from app.core.database import PgSingleton
 from app.models.users import Users
 from sqlalchemy import select
-
 
 class BaseApi:
     def __init__(self):
@@ -29,4 +28,3 @@ class BaseApi:
         result = await db_session.execute(select(Users).filter(Users.id == user_id))
         user = result.scalar_one_or_none()
         return user
-
