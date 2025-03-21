@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
@@ -11,8 +13,8 @@ class MessageCreate(MessageBase):
 
 class MessageOut(MessageBase):
     id: int
-    chat_id: int
-    sender_id: int
+    chat_id: UUID
+    sender_id: UUID
     created_at: datetime
 
     class Config:
@@ -20,8 +22,8 @@ class MessageOut(MessageBase):
 
 class ChatOut(BaseModel):
     id: int
-    customer_id: int
-    performer_id: int
+    customer_id: UUID
+    performer_id: UUID
     created_at: datetime
 
     class Config:

@@ -43,11 +43,14 @@ class ChatApi(BaseApi):
             methods=["POST"],
             response_model=dict,
         )
-        self.router.add_websocket_route(
-            "/ws/chat/{chat_id}",
-            self.websocket_endpoint,
+        self.router.websocket(
+            "/ws/test",
+            # "/ws/chat/{chat_id}",
         )
         self.redis_client = RedisSingleton().redis_client
+
+    async def a(self):
+        return 11
 
     async def create_chat(
         self,
@@ -198,73 +201,49 @@ class ChatApi(BaseApi):
         self,
         websocket: WebSocket,
         chat_id: UUID,
-        token: str,
-        current_user: Users = Depends(get_current_user),
+        current_user: Users = Depends(get_current_user)
     ):
         """
-        WebSocket для обмена сообщениями в чате.
-
-        Args:
-            websocket: WebSocket соединение
-            chat_id: UUID чата
-            token: Токен авторизации
+        WebSocket эндпоинт для реального общения в чате.
+        Проверка прав пользователя перед подключением.
         """
-        async with self.db as db:
-            if not current_user:
-                await websocket.close(code=1008)
-                return
-
-            chat = await db.execute(select(Chat).where(Chat.id == chat_id))
-            chat = chat.scalars().first()
-            if not chat:
-                await websocket.close(code=1008)
-                return
-
-            if user.id not in [chat.customer_id, chat.performer_id]:
-                await websocket.close(code=1008)
-                return
-
+        # Принятие подключения WebSocket
         await websocket.accept()
 
-        pubsub = self.redis_client.pubsub()
-        await pubsub.subscribe(f"chat:{chat_id}")
+        # Проверка существования чата и прав доступа пользователя
+        async with self.db as db:
+            chat = await db.execute(select(Chat).where(Chat.id == chat_id))
+            chat = chat.scalars().first()
 
-        async def listen_to_redis():
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    await websocket.send_text(message["data"].decode())
+            if not chat:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Чат не найден")
 
-        import asyncio
-        asyncio.create_task(listen_to_redis())
+            # Проверка прав доступа
+            if current_user.id not in [chat.customer_id, chat.performer_id]:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="У вас нет доступа к этому чату")
 
         try:
+            # Бесконечный цикл для получения сообщений от клиента
             while True:
                 data = await websocket.receive_text()
-                message_data = json.loads(data)
+
+                # Сохранение сообщения в БД
+                message = Message(
+                    chat_id=chat_id,
+                    sender_id=current_user.id,
+                    content=data
+                )
                 async with self.db as db:
-                    message = Message(
-                        chat_id=chat_id,
-                        sender_id=user.id,
-                        content=message_data.get("content"),
-                        file_url=message_data.get("file_url"),
-                    )
                     db.add(message)
                     await self.update_db(db, message)
 
-                message_payload = {
-                    "sender_id": str(user.id),
-                    "content": message.content,
-                    "file_url": message.file_url,
-                    "created_at": message.created_at.isoformat(),
-                }
-                await self.redis_client.publish(f"chat:{chat_id}", json.dumps(message_payload))
+                # Отправка сообщения обратно клиенту
+                message_out = MessageOut(id=message.id, sender_id=current_user.id, content=message.content)
+                await websocket.send_text(json.dumps(message_out.dict()))
 
-                # Если другой участник оффлайн, отправляем уведомление через Celery
-                other_user_id = chat.performer_id if user.id == chat.customer_id else chat.customer_id
-                # Проверяем, есть ли активные WebSocket подключения для другого пользователя
-                # В данном случае мы упрощаем, отправляя уведомление всегда, если нужно — добавьте проверку
-                send_notification.delay(str(chat_id), message.content)
+                # Также можно сохранить сообщение в Redis для быстрой выборки
+                await self.redis_client.set(f"chat:{chat_id}:message:{message.id}", json.dumps(message_out.dict()))
 
         except WebSocketDisconnect:
-            await pubsub.unsubscribe(f"chat:{chat_id}")
-            await self.redis_client.close()
+            print(f"Пользователь {current_user.id} отключился от чата {chat_id}")
+            await websocket.close()
