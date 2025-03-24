@@ -23,12 +23,14 @@ async def websocket_endpoint(websocket: WebSocket, token: str, chat_id: int):
                 await manager.broadcast(f"Пользователь {user.username} присоединился к чату.")
                 while True:
                     data = await websocket.receive_text()
-                    message = await save_message(db, chat.id, user.id, data)
-                    await manager.broadcast(f"Сообщение: {message.content}")
+                    if data:
+                        message = await save_message(db, chat.id, user.id, data)
+                        await manager.broadcast(f"Сообщение: {message.content}")
 
     except ValueError as e:
         await manager.broadcast(str(e))
         await manager.disconnect(websocket, user.id)
+
     except WebSocketDisconnect:
         await manager.disconnect(websocket, user.id)
         await manager.broadcast(f"Пользователь {user.username} покинул чат.")

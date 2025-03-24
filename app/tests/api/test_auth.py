@@ -40,7 +40,16 @@ def test_login(client):
     response_data = response.json()
     assert "username" in response_data
     assert "newuser" == response_data.get("username")
-
+    cookies = {
+            "access_token": response.cookies.get("access_token"),
+            "refresh_token": response.cookies.get("refresh_token"),
+            "csrf_token": response.cookies.get("csrf_token")
+    }
+    client.post(
+        "api/v1/auth/logout",
+        cookies=cookies,
+        headers={"X-CSRF-TOKEN": response.cookies.get("csrf_token")},
+    )
     # логин по эмеэйлу
     login_data_email = {
         "email": "newuser@example.com",
@@ -50,6 +59,16 @@ def test_login(client):
     assert response.status_code == 200
     response_data = response.json()
     assert "newuser@example.com" in response_data.get("email")
+    cookies = {
+            "access_token": response.cookies.get("access_token"),
+            "refresh_token": response.cookies.get("refresh_token"),
+            "csrf_token": response.cookies.get("csrf_token")
+    }
+    client.post(
+        "api/v1/auth/logout",
+        cookies=cookies,
+        headers={"X-CSRF-TOKEN": response.cookies.get("csrf_token")},
+    )
 
     # логин по телефону
     phone_data_email = {
@@ -60,6 +79,16 @@ def test_login(client):
     assert response.status_code == 200
     response_data = response.json()
     assert "+1987654321" == response_data.get("phone")
+    cookies = {
+            "access_token": response.cookies.get("access_token"),
+            "refresh_token": response.cookies.get("refresh_token"),
+            "csrf_token": response.cookies.get("csrf_token")
+    }
+    client.post(
+        "api/v1/auth/logout",
+        cookies=cookies,
+        headers={"X-CSRF-TOKEN": response.cookies.get("csrf_token")},
+    )
 
 
 def test_login_invalid_credentials(client):
