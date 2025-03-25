@@ -9,11 +9,12 @@ import logging
 from dotenv import load_dotenv
 import os
 from starlette.middleware.cors import CORSMiddleware
-
-load_dotenv()
+from app.utils.websocket.chat.websocket_router import router as websocket_router
 
 logger = logging.getLogger("  app  ")
 logging.basicConfig(level=logging.INFO)
+
+load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -54,6 +55,7 @@ app.add_middleware(
 
 router = get_router()
 app.include_router(router, prefix="/api/v1")
+app.include_router(websocket_router)
 
 @app.get("/")
 def root():
