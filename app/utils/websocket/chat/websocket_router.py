@@ -4,12 +4,12 @@ from app.utils.websocket.websocket_manager import (
     ConnectionManager,
     get_current_user_websocket
 )
-from app.routers import router
 from fastapi import (
+    APIRouter,
     WebSocket,
     WebSocketDisconnect
 )
-
+router = APIRouter()
 manager = ConnectionManager()
 
 @router.websocket("/ws/chat/{chat_id}")
