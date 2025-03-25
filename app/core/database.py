@@ -1,7 +1,8 @@
+import os
+
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import Settings
 
 
 class PgSingleton:
@@ -26,7 +27,7 @@ class PgSingleton:
     @property
     def engine(self) -> AsyncEngine:
         if not self._engine:
-            self._engine = create_async_engine(Settings().DATABASE_URL)
+            self._engine = create_async_engine(os.getenv("DATABASE_URL"))
         return self._engine
 
     @property

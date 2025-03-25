@@ -1,0 +1,99 @@
+version: '3.8'
+
+x-common-environment: &common-environment
+  REDIS_HOST: redis
+  DATABASE_URL: ${DATABASE_URL}
+  DB_PASSWORD: ${DB_PASSWORD}
+  SUPABASE_URL: ${SUPABASE_URL}
+  SUPABASE_KEY: ${SUPABASE_KEY}
+  BUCKET_NAME: ${BUCKET_NAME}
+  REDIS_PORT: ${REDIS_PORT}
+  REDIS_DB: ${REDIS_DB}
+  REDIS_USERNAME: ${REDIS_USERNAME}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  CELERY_TIMEZONE: ${CELERY_TIMEZONE}
+  CELERY_ENABLE_UTC: ${CELERY_ENABLE_UTC}
+  SECRET_KEY: ${SECRET_KEY}
+  ALGORITHM: ${ALGORITHM}
+  ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+  LOCALHOST: ${LOCALHOST}
+  PORT: ${PORT}
+  PYTHONPATH: ${PYTHONPATH}
+
+services:
+  web:
+    build: .
+    container_name: ipWeb
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      <<: *common-environment
+
+  flower:
+    build: .
+    container_name: ipFlower
+    command:
+      celery -A app.core.celery:celery_app flower --port=5555 --address=0.0.0.0
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      <<: *common-environment
+
+  celery_alpha_worker:
+    build: .
+    container_name: celery_alpha_worker
+    command:
+      - celery
+      - -A
+      - app.core.celery:celery_app
+      - worker
+      - --loglevel=info
+      - --concurrency=5
+      - -n
+      - "alpha_worker"
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      <<: *common-environment
+
+  celery_beat:
+    build: .
+    container_name: ipCeleryBeat
+    command:
+      - celery
+      - -A
+      - app.core.celery:celery_app
+      - beat
+      - --loglevel=info
+      - --scheduler=celery.beat.PersistentScheduler
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      <<: *common-environment
+
+  redis:
+    image: redis:latest
+    container_name: ipRedis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --maxclients 2000
+
+volumes:
+  redis_data:

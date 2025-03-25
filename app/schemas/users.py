@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, ConfigDict
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
@@ -9,11 +9,22 @@ class UserBase(BaseModel):
     username: str
 
 
-class UserCreate(UserBase):
-    email: EmailStr = Field(..., example="user@example.com", nullable=True)
-    username: str = Field(..., example="johndoe", nullable=True)
-    password: str = Field(..., min_length=8, example="strongpass123", nullable=True)
-    phone: str = Field(..., example="1234567890", nullable=True)
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    phone: str
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "user@example.com",
+                "username": "johndoe",
+                "password": "strongpass123",
+                "phone": "1234567890"
+            }
+        }
+    )
 
 
 class UserUpdate(BaseModel):
@@ -22,9 +33,10 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: UUID
+    phone: str
     created_at: datetime
 
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 

@@ -1,12 +1,12 @@
 - Создать новую миграцию
 
-python .\app\scripts\safe_migrate.py
+python app/scripts/safe_migrate.py
 
 откатить миграцию:
 
-alembic -c app/alembic.ini downgrade
+alembic -c alembic.ini downgrade
 
 применить миграцию:
 
-alembic -c app/alembic.ini upgrade head
+alembic -c alembic.ini upgrade head
 
