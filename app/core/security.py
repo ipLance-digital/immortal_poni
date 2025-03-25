@@ -64,7 +64,7 @@ def set_token_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,
+        secure=False,
         samesite="lax",
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
@@ -72,7 +72,7 @@ def set_token_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=False,
         samesite="lax",
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
@@ -80,7 +80,7 @@ def set_token_cookie(
         key="csrf_token",
         value=csrf_token,
         httponly=False,
-        secure=True,
+        secure=False,
         samesite="lax",
         max_age=CSRF_TOKEN_EXPIRE_MINUTES * 60,
     )
