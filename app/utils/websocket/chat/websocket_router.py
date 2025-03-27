@@ -25,7 +25,12 @@ async def websocket_endpoint(websocket: WebSocket, token: str, chat_id: int):
                     data = await websocket.receive_text()
                     if data:
                         message = await save_message(db, chat.id, user.id, data)
-                        await manager.broadcast(f"Сообщение: {message.content}")
+                        result_data = {
+                            "user_id": user.id,
+                            "username": user.username,
+                            "message": message.content,
+                        }
+                        await manager.broadcast(f"ws_data: {result_data}")
 
     except ValueError as e:
         await manager.broadcast(str(e))

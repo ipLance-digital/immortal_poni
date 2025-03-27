@@ -10,6 +10,7 @@ from uuid import UUID
 from typing import List
 from app.api.storage import upload_file
 from app.core.redis import RedisSingleton
+from app.core.security import cipher
 from app.models.chat import Chat, Message
 from app.models.users import Users
 from app.schemas.chat import ChatOut, MessageOut
@@ -135,7 +136,7 @@ class ChatApi(BaseApi):
 
     async def get_messages(
         self,
-        chat_id: UUID,
+        chat_id: int,
         skip: int = 0,
         limit: int = 50,
         current_user: Users = Depends(get_current_user),
@@ -177,6 +178,11 @@ class ChatApi(BaseApi):
                 .limit(limit)
             )
             messages = messages.scalars().all()
+        for msg in messages:
+            try:
+                msg.content = cipher.decrypt(msg.content.encode()).decode()
+            except Exception:
+                msg.content = "Ошибка расшифровки"
         return messages
 
     async def upload_chat_file(

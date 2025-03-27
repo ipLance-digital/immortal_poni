@@ -7,12 +7,14 @@ from passlib.context import CryptContext
 from fastapi import Response
 from app.core.redis import RedisSingleton
 from dotenv import load_dotenv
+from cryptography.fernet import Fernet
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+cipher = Fernet(os.getenv("ENCRYPTION_KEY"))
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 300))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 30))
 CSRF_TOKEN_EXPIRE_MINUTES = int(os.getenv("CSRF_TOKEN_EXPIRE_MINUTES", 60))
