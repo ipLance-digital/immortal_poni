@@ -24,11 +24,11 @@ async def websocket_endpoint(websocket: WebSocket, token: str, chat_id: int):
                 while True:
                     data = await websocket.receive_text()
                     if data:
-                        message = await save_message(db, chat.id, user.id, data)
+                        await save_message(db, chat.id, user.id, data)
                         result_data = {
                             "user_id": user.id,
                             "username": user.username,
-                            "message": message.content,
+                            "message": data,
                         }
                         await manager.broadcast(f"ws_data: {result_data}")
 
