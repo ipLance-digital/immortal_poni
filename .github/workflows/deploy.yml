@@ -30,7 +30,6 @@ jobs:
           echo "CELERY_TIMEZONE=${{ secrets.CELERY_TIMEZONE }}" >> .env
           echo "CELERY_ENABLE_UTC=${{ secrets.CELERY_ENABLE_UTC }}" >> .env
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
-          echo "ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}" >> .env
           echo "ALGORITHM=${{ secrets.ALGORITHM }}" >> .env
           echo "ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}" >> .env
           echo "LOCALHOST=${{ secrets.LOCALHOST }}" >> .env
