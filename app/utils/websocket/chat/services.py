@@ -3,6 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from app.core.security import cipher
 from app.models.chat import Chat, Message
 
 
@@ -22,10 +23,11 @@ async def save_message(db, chat_id: int, sender_id, content: str) -> Message:
     """
         Сохраняет сообщение в базе данных.
     """
+    encrypted_content = cipher.encrypt(content.encode()).decode()
     message = Message(
         chat_id=chat_id,
         sender_id=sender_id,
-        content=content,
+        content=encrypted_content,
         created_at=datetime.datetime.utcnow()
     )
     db.add(message)

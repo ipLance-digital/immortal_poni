@@ -13,7 +13,7 @@ class MessageCreate(MessageBase):
 
 class MessageOut(MessageBase):
     id: int
-    chat_id: UUID
+    chat_id: int
     sender_id: UUID
     created_at: datetime
 
