@@ -1,15 +1,13 @@
 import datetime
-from uuid import UUID
 
 from sqlalchemy import select
-
-from app.core.security import cipher
 from app.models.chat import Chat, Message
+from app.api.base import BaseApi
 
 
 async def validate_chat_and_user(db, chat_id: int, user_id) -> Chat:
     """
-        Проверяет существование чата и принадлежность пользователя к чату.
+    Проверяет существование чата и принадлежность пользователя к чату.
     """
     chat = await db.execute(select(Chat).where(Chat.id == chat_id))
     chat = chat.scalars().first()
@@ -19,16 +17,17 @@ async def validate_chat_and_user(db, chat_id: int, user_id) -> Chat:
         raise ValueError("Пользователь не найден.")
     return chat
 
+
 async def save_message(db, chat_id: int, sender_id, content: str) -> Message:
     """
-        Сохраняет сообщение в базе данных.
+    Сохраняет сообщение в базе данных.
     """
-    encrypted_content = cipher.encrypt(content.encode()).decode()
+    encrypted_content = BaseApi.security.cipher.encrypt(content.encode()).decode()
     message = Message(
         chat_id=chat_id,
         sender_id=sender_id,
         content=encrypted_content,
-        created_at=datetime.datetime.utcnow()
+        created_at=datetime.datetime.utcnow(),
     )
     db.add(message)
     await db.commit()

@@ -21,7 +21,7 @@ class UserCreate(BaseModel):
                 "email": "user@example.com",
                 "username": "johndoe",
                 "password": "strongpass123",
-                "phone": "1234567890"
+                "phone": "1234567890",
             }
         }
     )

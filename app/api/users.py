@@ -8,8 +8,6 @@ from app.schemas.users import (
     UserResponse,
     UserList,
 )
-from app.core.security import get_password_hash
-from app.api.auth import get_current_user
 from typing import Dict
 from app.api.base import BaseApi
 
@@ -18,9 +16,7 @@ class UsersApi(BaseApi):
     def __init__(self):
         super().__init__()
         self.router.add_api_route(
-            "", self.get_users,
-            methods=["GET"],
-            response_model=UserList
+            "", self.get_users, methods=["GET"], response_model=UserList
         )
         self.router.add_api_route(
             "",
@@ -30,10 +26,7 @@ class UsersApi(BaseApi):
             status_code=status.HTTP_201_CREATED,
         )
         self.router.add_api_route(
-            "/{user_id}",
-            self.get_user,
-            methods=["GET"],
-            response_model=UserResponse
+            "/{user_id}", self.get_user, methods=["GET"], response_model=UserResponse
         )
         self.router.add_api_route(
             "/change_data",
@@ -44,16 +37,13 @@ class UsersApi(BaseApi):
 
     def check_superuser(self, user: Users):
         if not user.is_superuser:
-            raise HTTPException(
-                status_code=403,
-                detail="Forbidden"
-            )
+            raise HTTPException(status_code=403, detail="Forbidden")
 
     async def get_users(
         self,
         skip: int = 0,
         limit: int = 10,
-        current_user: Users = Depends(get_current_user),
+        current_user: Users = Depends(BaseApi.get_current_user),
     ):
         """
         Получение списка пользователей с пагинацией.
@@ -70,7 +60,7 @@ class UsersApi(BaseApi):
     async def get_user(
         self,
         user_id: UUID,
-        current_user: Users = Depends(get_current_user),
+        current_user: Users = Depends(BaseApi.get_current_user),
     ) -> UserResponse:
         """
         Получение данных конкретного пользователя.
@@ -89,16 +79,13 @@ class UsersApi(BaseApi):
             user = await db.execute(select(Users).where(Users.id == user_id))
             user = user.scalars().first()
             if user is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail="User not found"
-                )
+                raise HTTPException(status_code=404, detail="User not found")
         return user
 
     async def create_user(
         self,
         user: UserCreate,
-        current_user: Users = Depends(get_current_user),
+        current_user: Users = Depends(BaseApi.get_current_user),
     ) -> UserResponse:
         """
         Создание нового пользователя.
@@ -122,7 +109,7 @@ class UsersApi(BaseApi):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Username already registered",
                 )
-            hashed_password = get_password_hash(user.password)
+            hashed_password = self.security.get_password_hash(user.password)
             db_user = Users(
                 email=user.email,
                 username=user.username,
@@ -135,7 +122,7 @@ class UsersApi(BaseApi):
     async def update_user(
         self,
         user: UserUpdate,
-        current_user: Users = Depends(get_current_user),
+        current_user: Users = Depends(BaseApi.get_current_user),
     ) -> UserResponse:
         """
         Обновление данных пользователя.
@@ -143,14 +130,11 @@ class UsersApi(BaseApi):
         async with self.db as db:
             db_user = current_user
             if db_user is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail="User not found"
-                )
+                raise HTTPException(status_code=404, detail="User not found")
 
             update_data: Dict = user.model_dump(exclude_unset=True)
             if "password" in update_data:
-                update_data["hashed_password"] = get_password_hash(
+                update_data["hashed_password"] = self.security.get_password_hash(
                     update_data.pop("password")
                 )
 

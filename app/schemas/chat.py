@@ -4,12 +4,15 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
+
 class MessageBase(BaseModel):
     content: str
     file_url: Optional[str] = None
 
+
 class MessageCreate(MessageBase):
     pass
+
 
 class MessageOut(MessageBase):
     id: int
@@ -20,6 +23,7 @@ class MessageOut(MessageBase):
     class Config:
         from_attributes = True
 
+
 class ChatOut(BaseModel):
     id: int
     customer_id: UUID
@@ -28,4 +32,3 @@ class ChatOut(BaseModel):
 
     class Config:
         from_attributes = True
-        

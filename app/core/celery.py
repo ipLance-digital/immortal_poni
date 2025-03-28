@@ -30,6 +30,5 @@ celery_app.conf.imports = (
 
 # хранение celerybeat-schedule
 celery_app.conf.beat_schedule_filename = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    'tasks', 'celerybeat-schedule'
+    os.path.dirname(os.path.dirname(__file__)), "tasks", "celerybeat-schedule"
 )
