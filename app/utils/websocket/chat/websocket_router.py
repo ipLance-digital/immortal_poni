@@ -2,15 +2,13 @@ from app.core.database import PgSingleton
 from app.utils.websocket.chat.services import validate_chat_and_user, save_message
 from app.utils.websocket.websocket_manager import (
     ConnectionManager,
-    get_current_user_websocket
+    get_current_user_websocket,
 )
-from fastapi import (
-    APIRouter,
-    WebSocket,
-    WebSocketDisconnect
-)
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 router = APIRouter()
 manager = ConnectionManager()
+
 
 @router.websocket("/ws/chat/{chat_id}")
 async def websocket_endpoint(websocket: WebSocket, token: str, chat_id: int):
@@ -20,7 +18,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str, chat_id: int):
             if user:
                 chat = await validate_chat_and_user(db, chat_id, user.id)
                 await manager.connect(websocket, user.id)
-                await manager.broadcast(f"Пользователь {user.username} присоединился к чату.")
+                await manager.broadcast(
+                    f"Пользователь {user.username} присоединился к чату."
+                )
                 while True:
                     data = await websocket.receive_text()
                     if data:

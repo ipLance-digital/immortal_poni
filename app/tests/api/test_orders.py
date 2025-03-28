@@ -11,26 +11,21 @@ async def test_register_user(client):
         "username": "newuser",
         "email": "newuser@example.com",
         "phone": "+1987654321",
-        "password": "newpassword"
+        "password": "newpassword",
     }
     response = client.post("api/v1/auth/register", json=user_data)
     assert response.status_code == 200
     assert response.json()["username"] == user_data["username"]
 
+
 @pytest.mark.asyncio
 async def test_create_order(client):
-    login_data = {
-        "username": "newuser",
-        "password": "newpassword"
-    }
-    login_response = client.post(
-        "api/v1/auth/login",
-        json=login_data
-    )
+    login_data = {"username": "newuser", "password": "newpassword"}
+    login_response = client.post("api/v1/auth/login", json=login_data)
     cookies = {
         "access_token": login_response.cookies.get("access_token"),
         "refresh_token": login_response.cookies.get("refresh_token"),
-        "csrf_token": login_response.cookies.get("csrf_token")
+        "csrf_token": login_response.cookies.get("csrf_token"),
     }
     assert login_response.status_code == 200
     response = client.get(
@@ -38,7 +33,7 @@ async def test_create_order(client):
         cookies=cookies,
         headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
-    user_id = response.json()['id']
+    user_id = response.json()["id"]
     order_data = {
         "name": "New Order",
         "body": "Order details",
@@ -67,18 +62,12 @@ async def test_create_order(client):
 
 @pytest.mark.asyncio
 async def test_attach_file_to_order(client):
-    login_data = {
-        "username": "newuser",
-        "password": "newpassword"
-    }
-    login_response = client.post(
-        "api/v1/auth/login",
-        json=login_data
-    )
+    login_data = {"username": "newuser", "password": "newpassword"}
+    login_response = client.post("api/v1/auth/login", json=login_data)
     cookies = {
         "access_token": login_response.cookies.get("access_token"),
         "refresh_token": login_response.cookies.get("refresh_token"),
-        "csrf_token": login_response.cookies.get("csrf_token")
+        "csrf_token": login_response.cookies.get("csrf_token"),
     }
     assert login_response.status_code == 200
     response = client.get(
@@ -86,7 +75,7 @@ async def test_attach_file_to_order(client):
         cookies=cookies,
         headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
-    user_id = response.json()['id']
+    user_id = response.json()["id"]
     order_data = {
         "name": "New Order with File",
         "body": "Order details with file",
@@ -109,8 +98,9 @@ async def test_attach_file_to_order(client):
     with open(tmp_path, "rb") as file:
         response = client.post(
             f"api/v1/orders/{UUID(order_id)}/attach_file",
-            files={"file": (
-            os.path.basename(tmp_path), file, "application/octet-stream")},
+            files={
+                "file": (os.path.basename(tmp_path), file, "application/octet-stream")
+            },
             cookies=cookies,
             headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
         )
@@ -123,8 +113,8 @@ async def test_attach_file_to_order(client):
     )
     assert response.status_code == 200
     os.remove(tmp_path)
-    if os.path.isdir('temp'):
-        os.rmdir('temp')
+    if os.path.isdir("temp"):
+        os.rmdir("temp")
 
 
 @pytest.mark.asyncio
@@ -132,26 +122,20 @@ async def test_update_order(client):
     update_data = {
         "price": 200,
     }
-    login_data = {
-        "username": "newuser",
-        "password": "newpassword"
-    }
-    login_response = client.post(
-        "api/v1/auth/login",
-        json=login_data
-    )
+    login_data = {"username": "newuser", "password": "newpassword"}
+    login_response = client.post("api/v1/auth/login", json=login_data)
     assert login_response.status_code == 200
     cookies = {
-            "access_token": login_response.cookies.get("access_token"),
-            "refresh_token": login_response.cookies.get("refresh_token"),
-            "csrf_token": login_response.cookies.get("csrf_token")
+        "access_token": login_response.cookies.get("access_token"),
+        "refresh_token": login_response.cookies.get("refresh_token"),
+        "csrf_token": login_response.cookies.get("csrf_token"),
     }
     response = client.get(
         "api/v1/auth/me",
         cookies=cookies,
         headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
-    user_id = response.json()['id']
+    user_id = response.json()["id"]
     order_data = {
         "name": "New Order to Update",
         "body": "Order details",
@@ -179,18 +163,12 @@ async def test_update_order(client):
 
 @pytest.mark.asyncio
 async def test_delete_order(client):
-    login_data = {
-        "username": "newuser",
-        "password": "newpassword"
-    }
-    login_response = client.post(
-        "api/v1/auth/login",
-        json=login_data
-    )
+    login_data = {"username": "newuser", "password": "newpassword"}
+    login_response = client.post("api/v1/auth/login", json=login_data)
     cookies = {
-            "access_token": login_response.cookies.get("access_token"),
-            "refresh_token": login_response.cookies.get("refresh_token"),
-            "csrf_token": login_response.cookies.get("csrf_token")
+        "access_token": login_response.cookies.get("access_token"),
+        "refresh_token": login_response.cookies.get("refresh_token"),
+        "csrf_token": login_response.cookies.get("csrf_token"),
     }
     assert login_response.status_code == 200
     response = client.get(
@@ -198,7 +176,7 @@ async def test_delete_order(client):
         cookies=cookies,
         headers={"X-CSRF-TOKEN": login_response.cookies.get("csrf_token")},
     )
-    user_id = response.json()['id']
+    user_id = response.json()["id"]
     order_data = {
         "name": "Order to Delete",
         "body": "Order details",
@@ -225,4 +203,4 @@ async def test_delete_order(client):
 
 @pytest.mark.asyncio
 async def test_delete_test_user():
-    await delete_user('newuser')
+    await delete_user("newuser")

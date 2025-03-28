@@ -18,6 +18,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+
 def run_migrations_offline() -> None:
     """
     Запуск миграций в оффлайн-режиме.
@@ -46,12 +47,14 @@ def run_migrations_online() -> None:
             await connection.run_sync(do_run_migrations)
 
     def do_run_migrations(connection):
-        context.configure(connection=connection, 
-                          target_metadata=target_metadata,
-                          render_as_batch=True)
+        context.configure(
+            connection=connection, target_metadata=target_metadata, render_as_batch=True
+        )
         with context.begin_transaction():
             context.run_migrations()
+
     import asyncio
+
     asyncio.run(run_async_migrations())
 
 

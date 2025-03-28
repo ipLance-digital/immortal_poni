@@ -16,6 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Приложение запускается...")
@@ -39,6 +40,7 @@ async def lifespan(app: FastAPI):
     await RedisSingleton().close_redis()
     logger.info("Сервис был остановлен!")
 
+
 app = FastAPI(
     title="IP-lance API",
     version="1.0.0",
@@ -55,11 +57,12 @@ app.add_middleware(
 
 router = get_router()
 app.include_router(router, prefix="/api/v1")
-app.include_router(websocket_router)
+
 
 @app.get("/")
 def root():
     return {"message": "Welcome to IP-lance"}
+
 
 if __name__ == "__main__":
     uvicorn.run(

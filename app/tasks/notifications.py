@@ -6,24 +6,25 @@ from app.models.users import Users
 from sqlalchemy import select
 
 
-async def async_send_notification(
-        chat_id: str,
-        message_content: str
-):
+async def async_send_notification(chat_id: str, message_content: str):
     async with PgSingleton().session as db:
         chat = (
-            await db.execute(select(Chat).where(Chat.id == chat_id))
-        ).scalars().first()
+            (await db.execute(select(Chat).where(Chat.id == chat_id))).scalars().first()
+        )
         if not chat:
             print(f"Chat {chat_id} not found")
             return
 
         customer = (
-            await db.execute(select(Users).where(Users.id == chat.customer_id))
-        ).scalars().first()
+            (await db.execute(select(Users).where(Users.id == chat.customer_id)))
+            .scalars()
+            .first()
+        )
         performer = (
-            await db.execute(select(Users).where(Users.id == chat.performer_id))
-        ).scalars().first()
+            (await db.execute(select(Users).where(Users.id == chat.performer_id)))
+            .scalars()
+            .first()
+        )
 
         if not customer or not performer:
             print("Customer or performer not found")
