@@ -13,6 +13,7 @@ users = UsersApi()
 orders = OrdersApi()
 chats = ChatApi()
 
+
 def get_router() -> APIRouter:
     """
     Создает и настраивает основной роутер приложения.

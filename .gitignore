@@ -1,7 +1,7 @@
 # Virtual Environment
 .venv/
 venv/
-ENV/
+app/.env/
 .env/
 
 # Python

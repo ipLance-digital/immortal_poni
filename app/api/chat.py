@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class ChatApi(BaseApi):
     def __init__(self):
         super().__init__()
@@ -50,7 +51,6 @@ class ChatApi(BaseApi):
         )
         self.redis_client = RedisSingleton().redis_client
 
-
     async def create_chat(
         self,
         customer_id: UUID,
@@ -58,35 +58,31 @@ class ChatApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ) -> ChatOut:
         """
-            Создание нового чата между заказчиком и исполнителем.
-            Args:
-                customer_id: UUID заказчика
-                performer_id: UUID исполнителя
-                current_user: Авторизованный пользователь
-            Returns:
-                ChatOut: Созданный чат
-            Raises:
-                HTTPException: Если пользователь не имеет прав или участники не найдены
+        Создание нового чата между заказчиком и исполнителем.
+        Args:
+            customer_id: UUID заказчика
+            performer_id: UUID исполнителя
+            current_user: Авторизованный пользователь
+        Returns:
+            ChatOut: Созданный чат
+        Raises:
+            HTTPException: Если пользователь не имеет прав или участники не найдены
         """
         if current_user.id not in [customer_id, performer_id]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only create a chat if "
-                       "you are a customer or performer",
+                "you are a customer or performer",
             )
         async with self.db as db:
-            customer = await db.execute(
-                select(Users).where(Users.id == customer_id)
-            )
+            customer = await db.execute(select(Users).where(Users.id == customer_id))
             customer = customer.scalars().first()
             if not customer:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Customer not found",
                 )
-            performer = await db.execute(
-                select(Users).where(Users.id == performer_id)
-            )
+            performer = await db.execute(select(Users).where(Users.id == performer_id))
             performer = performer.scalars().first()
             if not performer:
                 raise HTTPException(
@@ -95,8 +91,8 @@ class ChatApi(BaseApi):
                 )
             existing_chat = await db.execute(
                 select(Chat).where(
-                    (Chat.customer_id == customer_id) &
-                    (Chat.performer_id == performer_id)
+                    (Chat.customer_id == customer_id)
+                    & (Chat.performer_id == performer_id)
                 )
             )
             existing_chat = existing_chat.scalars().first()
@@ -105,10 +101,7 @@ class ChatApi(BaseApi):
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Chat between these users already exists",
                 )
-            chat = Chat(
-                customer_id=customer_id,
-                performer_id=performer_id
-            )
+            chat = Chat(customer_id=customer_id, performer_id=performer_id)
             db.add(chat)
             await self.update_db(db, chat)
         return chat
@@ -118,17 +111,17 @@ class ChatApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ) -> List[ChatOut]:
         """
-            Получение списка чатов текущего пользователя.
-            Args:
-                current_user: Авторизованный пользователь
-            Returns:
-                List[ChatOut]: Список чатов
+        Получение списка чатов текущего пользователя.
+        Args:
+            current_user: Авторизованный пользователь
+        Returns:
+            List[ChatOut]: Список чатов
         """
         async with self.db as db:
             chats = await db.execute(
                 select(Chat).where(
-                    (Chat.customer_id == current_user.id) |
-                    (Chat.performer_id == current_user.id)
+                    (Chat.customer_id == current_user.id)
+                    | (Chat.performer_id == current_user.id)
                 )
             )
             chats = chats.scalars().all()
@@ -142,22 +135,20 @@ class ChatApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ) -> List[MessageOut]:
         """
-            Получение сообщений в чате с пагинацией.
-            Args:
-                chat_id: UUID чата
-                skip: Пропуск записей
-                limit: Лимит записей
-                current_user: Авторизованный пользователь
+        Получение сообщений в чате с пагинацией.
+        Args:
+            chat_id: UUID чата
+            skip: Пропуск записей
+            limit: Лимит записей
+            current_user: Авторизованный пользователь
 
-            Returns:
-                List[MessageOut]: Список сообщений
-            Raises:
-                HTTPException: Если чат не найден или пользователь не имеет доступа
+        Returns:
+            List[MessageOut]: Список сообщений
+        Raises:
+            HTTPException: Если чат не найден или пользователь не имеет доступа
         """
         async with self.db as db:
-            chat = await db.execute(select(Chat).where(
-                Chat.id == chat_id)
-            )
+            chat = await db.execute(select(Chat).where(Chat.id == chat_id))
             chat = chat.scalars().first()
             if not chat:
                 raise HTTPException(
@@ -191,12 +182,12 @@ class ChatApi(BaseApi):
         current_user: Users = Depends(get_current_user),
     ) -> dict:
         """
-            Загрузка файла для чата.
-            Args:
-                file: Загружаемый файл
-                current_user: Авторизованный пользователь
-            Returns:
-                dict: Ссылка на загруженный файл
+        Загрузка файла для чата.
+        Args:
+            file: Загружаемый файл
+            current_user: Авторизованный пользователь
+        Returns:
+            dict: Ссылка на загруженный файл
         """
         file_url = await upload_file(file)
         return {"file_url": file_url}

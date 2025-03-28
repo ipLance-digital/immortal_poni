@@ -27,9 +27,7 @@ class Chat(Base):
     performer_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id"), nullable=True
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     is_group: Mapped[bool] = mapped_column(Boolean, default=False)
 
     customer = relationship("Users", foreign_keys=[customer_id])
@@ -56,9 +54,5 @@ class Message(Base):
 
 class ChatParticipant(Base):
     __tablename__ = "chat_participants"
-    chat_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("chats.id"), primary_key=True
-    )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id"), primary_key=True
-    )
+    chat_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("chats.id"), primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)

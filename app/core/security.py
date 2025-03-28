@@ -8,6 +8,7 @@ from fastapi import Response
 from app.core.redis import RedisSingleton
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -56,10 +57,7 @@ def create_csrf_token() -> str:
 
 
 def set_token_cookie(
-        response: Response,
-        access_token: str,
-        refresh_token: str,
-        csrf_token: str
+    response: Response, access_token: str, refresh_token: str, csrf_token: str
 ):
     """Установка токенов в куки."""
     response.set_cookie(
