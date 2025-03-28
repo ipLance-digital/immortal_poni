@@ -1,7 +1,6 @@
-from pprint import pprint
 from typing import List, Dict
 from uuid import UUID
-
+from sqlalchemy import func
 from fastapi import WebSocket
 from jose import JWTError, jwt
 from sqlalchemy.future import select
@@ -60,7 +59,7 @@ async def get_current_user_websocket(access_token) -> Users | None:
 
         async with PgSingleton().session as db:
             user = await db.execute(
-                select(Users).where(Users.username.ilike(username.lower()))
+                select(Users).where(func.lower(Users.username) == username.lower())
             )
             user = user.scalars().first()
             if user is None:
