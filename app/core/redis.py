@@ -21,7 +21,7 @@ class RedisSingleton:
                     password=os.getenv("REDIS_PASSWORD", ""),
                     username=os.getenv("REDIS_USERNAME", ""),
                     db=int(os.getenv("REDIS_DB", 0)),
-                    ssl=os.getenv("REDIS_SSL", "false").lower() == "true"
+                    ssl=os.getenv("REDIS_SSL", "false").lower() == "true",
                 )
             except Exception as e:
                 raise ConnectionError("Не удалось подключиться к Redis")

@@ -29,6 +29,7 @@ from app.schemas.users import UserCreate, UserResponse
 
 router = APIRouter()
 
+
 async def get_current_user(request: Request) -> Users:
     access_token = request.cookies.get("access_token")
     refresh_token = request.cookies.get("refresh_token")
@@ -36,33 +37,29 @@ async def get_current_user(request: Request) -> Users:
 
     if not access_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access token missing"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Access token missing"
         )
     if not refresh_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token missing"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing"
         )
     if not csrf_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="CSRF token missing"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="CSRF token missing"
         )
     if csrf_token != request.headers.get("X-CSRF-TOKEN"):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid CSRF token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid CSRF token"
         )
     if await is_token_blacklisted(access_token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access token has been revoked"
+            detail="Access token has been revoked",
         )
     if await is_token_blacklisted(refresh_token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token has been revoked"
+            detail="Refresh token has been revoked",
         )
     try:
         payload = jwt.decode(
@@ -74,12 +71,12 @@ async def get_current_user(request: Request) -> Users:
         if username is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials"
+                detail="Could not validate credentials",
             )
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials"
+            detail="Could not validate credentials",
         )
     async with PgSingleton().session as db:
         user = await db.execute(
@@ -89,9 +86,10 @@ async def get_current_user(request: Request) -> Users:
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials"
+                detail="Could not validate credentials",
             )
         return user
+
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(
@@ -105,27 +103,21 @@ async def read_users_me(
 @router.post("/register", response_model=UserResponse)
 async def register_user(user: UserCreate):
     async with PgSingleton().session as db:
-        result = await db.execute(
-            select(Users).where(Users.username == user.username)
-        )
+        result = await db.execute(select(Users).where(Users.username == user.username))
         db_user = result.scalars().first()
         if db_user:
             raise HTTPException(
                 status_code=400,
                 detail="Username already registered",
             )
-        result = await db.execute(
-            select(Users).where(Users.email == user.email)
-        )
+        result = await db.execute(select(Users).where(Users.email == user.email))
         db_user = result.scalars().first()
         if db_user:
             raise HTTPException(
                 status_code=400,
                 detail="Email already registered",
             )
-        result = await db.execute(
-            select(Users).where(Users.phone == user.phone)
-        )
+        result = await db.execute(select(Users).where(Users.phone == user.phone))
         db_user = result.scalars().first()
         if db_user:
             raise HTTPException(
@@ -144,35 +136,35 @@ async def register_user(user: UserCreate):
         await db.refresh(db_user)
         return db_user
 
+
 @router.post("/login")
-async def login(
-        login_data: LoginRequest,
-        response: Response
-):
+async def login(login_data: LoginRequest, response: Response):
     async with PgSingleton().session as db:
         if login_data.username:
             result = await db.execute(
-                select(Users).where(func.lower(Users.username) == func.lower(login_data.username))
+                select(Users).where(
+                    func.lower(Users.username) == func.lower(login_data.username)
+                )
             )
         elif login_data.email:
             result = await db.execute(
-                select(Users).where(func.lower(Users.email) == func.lower(login_data.email))
+                select(Users).where(
+                    func.lower(Users.email) == func.lower(login_data.email)
+                )
             )
         else:
             result = await db.execute(
                 select(Users).where(Users.phone == login_data.phone)
             )
         user = result.scalars().first()
-        if not user or not verify_password(
-                login_data.password,
-                user.hashed_password
-        ):
+        if not user or not verify_password(login_data.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
             )
         await create_and_store_tokens({"sub": user.username}, response)
         return UserResponse.model_validate(user.__dict__)
+
 
 @router.post("/logout")
 async def logout(
@@ -196,15 +188,13 @@ async def logout(
                 return {"message": "Successfully logged out"}
     except JWTError:
         logger.warning(f"Invalid token for user {current_user.username}")
-    raise HTTPException(
-        status_code=400,
-        detail="Invalid token"
-    )
+    raise HTTPException(status_code=400, detail="Invalid token")
+
 
 @router.post("/refresh")
 async def refresh_access_token(
-        request: Request,
-        response: Response,
+    request: Request,
+    response: Response,
 ):
     refresh_token = request.cookies.get("refresh_token")
     csrf_token = request.cookies.get("csrf_token")
@@ -241,10 +231,5 @@ async def refresh_access_token(
             detail="Invalid refresh token",
         )
     access_token = create_access_token(data={"sub": username})
-    set_token_cookie(
-        response,
-        access_token,
-        refresh_token,
-        csrf_token
-    )
+    set_token_cookie(response, access_token, refresh_token, csrf_token)
     return f"Create access tocken for {username}"

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, validator
 from typing import Optional
 
+
 class LoginRequest(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
@@ -9,11 +10,7 @@ class LoginRequest(BaseModel):
 
     @validator("password")
     def check_credentials(cls, v, values):
-        if not any(
-                [values.get('username'),
-                 values.get('email'),
-                 values.get('phone')]
-        ):
+        if not any([values.get("username"), values.get("email"), values.get("phone")]):
             raise ValueError(
                 "At least one of "
                 "'username', "

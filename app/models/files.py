@@ -2,14 +2,15 @@ import uuid
 from datetime import datetime
 from app.models.base_model import Base
 from sqlalchemy import (
-    Integer, 
-    String, 
-    DateTime, 
-    ForeignKey, 
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
 
 class Files(Base):
     __tablename__ = "files"

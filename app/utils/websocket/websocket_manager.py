@@ -41,7 +41,7 @@ class ConnectionManager:
             for connection in self.active_connections[user_id]:
                 await connection.send_text(message)
         else:
-            #TODO нужны варианты доставки сообщения, если пользователь вне чата
+            # TODO нужны варианты доставки сообщения, если пользователь вне чата
             pass
 
 
