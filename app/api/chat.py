@@ -5,7 +5,10 @@ from fastapi import (
     UploadFile,
     File,
 )
-from sqlalchemy import select
+from sqlalchemy import (
+    select,
+    desc,
+)
 from uuid import UUID
 from typing import List
 from app.core.redis import RedisSingleton
@@ -21,6 +24,7 @@ load_dotenv()
 class ChatApi(BaseApi):
     def __init__(self):
         super().__init__()
+        self.tags = ["Chats"]
         self.router.add_api_route(
             "",
             self.create_chat,
@@ -162,6 +166,7 @@ class ChatApi(BaseApi):
             messages = await db.execute(
                 select(Message)
                 .where(Message.chat_id == chat_id)
+                .order_by(desc(Message.created_at))
                 .offset(skip)
                 .limit(limit)
             )
