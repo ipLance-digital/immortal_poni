@@ -5,7 +5,6 @@ from jose import JWTError, jwt
 from sqlalchemy import func
 from sqlalchemy.future import select
 from fastapi import (
-    APIRouter,
     Depends,
     HTTPException,
     Request,
@@ -16,7 +15,10 @@ from app.api.base import BaseApi
 from app.core.logger import logger
 from app.models.users import Users
 from app.schemas.auth import LoginRequest
-from app.schemas.users import UserCreate, UserResponse
+from app.schemas.users import (
+    UserCreate,
+    UserResponse,
+)
 
 
 class AuthApi(BaseApi):
@@ -24,7 +26,10 @@ class AuthApi(BaseApi):
         super().__init__()
         self.tags = ["Authentication"]
         self.router.add_api_route(
-            "/me", self.read_users_me, methods=["GET"], response_model=UserResponse
+            "/me",
+            self.read_users_me,
+            methods=["GET"],
+            response_model=UserResponse,
         )
         self.router.add_api_route(
             "/register",
@@ -32,10 +37,20 @@ class AuthApi(BaseApi):
             methods=["POST"],
             response_model=UserResponse,
         )
-        self.router.add_api_route("/login", self.login, methods=["POST"])
-        self.router.add_api_route("/logout", self.logout, methods=["POST"])
         self.router.add_api_route(
-            "/refresh", self.refresh_access_token, methods=["POST"]
+            "/login",
+            self.login,
+            methods=["POST"],
+        )
+        self.router.add_api_route(
+            "/logout",
+            self.logout,
+            methods=["POST"],
+        )
+        self.router.add_api_route(
+            "/refresh",
+            self.refresh_access_token,
+            methods=["POST"],
         )
 
     async def read_users_me(
