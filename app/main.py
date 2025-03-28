@@ -57,6 +57,8 @@ app.add_middleware(
 
 router = get_router()
 app.include_router(router, prefix="/api/v1")
+# требуется для работоспособности websocket
+app.include_router(websocket_router)
 
 
 @app.get("/")
