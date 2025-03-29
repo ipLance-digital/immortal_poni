@@ -1,6 +1,5 @@
 from datetime import datetime
 from uuid import UUID
-from uuid import uuid4
 import uuid
 
 from sqlalchemy import delete, select
@@ -24,12 +23,22 @@ bucket_name = os.getenv("BUCKET_NAME")
 class SupabaseStorage:
     @staticmethod
     async def upload_file(
-        file_path: str, file_name: str, user_id: uuid.UUID
+            file_obj,
+            file_name: str,
+            user_id: uuid.UUID,
+            file_size,
+            content_type: str = "application/octet-stream"
     ) -> Optional[str]:
-        with open(file_path, "rb") as file:
-            file_id = str(uuid4())
-            supabase.storage.from_(bucket_name).upload(file_id, file)
-            file_size = os.path.getsize(file_path)
+        try:
+            file_id = str(uuid.uuid4())
+            supabase.storage.from_(bucket_name).upload(
+                path=file_id,
+                file=file_obj,
+                file_options={
+                    "content-type": content_type,
+                    "upsert": False
+                }
+            )
             async with PgSingleton().session as db:
                 file_record = Files(
                     id=uuid.UUID(file_id),
@@ -40,7 +49,12 @@ class SupabaseStorage:
                 )
                 db.add(file_record)
                 await db.commit()
-        return file_id
+
+            return file_id
+
+        except Exception as e:
+            print(f"Error uploading file: {str(e)}")
+            return None
 
     @staticmethod
     async def delete_file(file_uuid: UUID, user_id: UUID):

@@ -1,4 +1,6 @@
 import os
+import uuid
+from io import BytesIO
 from operator import or_
 from uuid import UUID
 from app.core.storage import SupabaseStorage
@@ -181,37 +183,53 @@ class OrdersApi(BaseApi):
         return f"Order id {order_uuid} deleted"
 
     async def attach_file_to_order(
-        self,
-        order_uuid: UUID,
-        file: UploadFile = File(...),
-        current_user: Users = Depends(BaseApi.get_current_user),
+            self,
+            order_uuid: uuid.UUID,
+            file: UploadFile = File(...),
+            current_user: Users = Depends(BaseApi.get_current_user),
     ):
-        """
-        Прикрепить файл к заказу.
-        """
         async with self.db as db:
             order = await db.execute(
                 select(Order).where(
-                    Order.id == order_uuid, Order.created_by == current_user.id
+                    Order.id == order_uuid,
+                    Order.created_by == current_user.id
                 )
             )
             order = order.scalar_one_or_none()
             if not order:
                 raise HTTPException(status_code=404, detail="Order not found")
-            os.makedirs("temp", exist_ok=True)
-            # TODO жуткая хуйня, переделать
-            file_path = f"temp/{file.filename}"
-            with open(file_path, "wb") as f:
-                f.write(await file.read())
-            file_id = await SupabaseStorage.upload_file(
-                file_path, file.filename, current_user.id
-            )
-            attachment = OrderAttachment(order_id=order.id, file_id=file_id)
-            db.add(attachment)
-            await db.commit()
-            os.remove(file_path)
 
-            return {"file_id": file_id, "message": "File attached successfully"}
+            try:
+                file_content = await file.read()
+                if len(file_content) > 10 * 1024 * 1024:
+                    raise HTTPException(status_code=413, detail="File too large")
+
+                file_size = file.size
+                file_id = await SupabaseStorage.upload_file(
+                    file_obj=file_content,
+                    file_name=file.filename,
+                    user_id=current_user.id,
+                    file_size=file_size,
+                    content_type=file.content_type
+                )
+                attachment = OrderAttachment(
+                    order_id=order.id,
+                    file_id=file_id
+                )
+                db.add(attachment)
+                await db.commit()
+
+                return {
+                    "file_id": file_id,
+                    "message": "File attached successfully"
+                }
+
+            except Exception as e:
+                await db.rollback()
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error attaching file: {str(e)}"
+                )
 
     async def delete_file_from_order(
         self,
