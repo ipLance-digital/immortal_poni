@@ -2,8 +2,6 @@ from fastapi import (
     Depends,
     HTTPException,
     status,
-    UploadFile,
-    File,
 )
 from sqlalchemy import (
     select,
@@ -11,7 +9,6 @@ from sqlalchemy import (
 )
 from uuid import UUID
 from typing import List
-from app.core.redis import RedisSingleton
 from app.models.chat import Chat, Message
 from app.models.users import Users
 from app.schemas.chat import ChatOut, MessageOut
@@ -44,13 +41,6 @@ class ChatApi(BaseApi):
             methods=["GET"],
             response_model=List[MessageOut],
         )
-        self.router.add_api_route(
-            "/upload-file",
-            self.upload_chat_file,
-            methods=["POST"],
-            response_model=dict,
-        )
-        self.redis_client = RedisSingleton().redis_client
 
     async def create_chat(
         self,
@@ -179,25 +169,3 @@ class ChatApi(BaseApi):
             except Exception:
                 msg.content = "Ошибка расшифровки"
         return messages
-
-    async def upload_chat_file(
-        self,
-        file: UploadFile = File(...),
-        current_user: Users = Depends(BaseApi.get_current_user),
-    ) -> dict:
-        """
-        Загрузка файла для чата.
-        Args:
-            file: Загружаемый файл
-            current_user: Авторизованный пользователь
-        Returns:
-            dict: Ссылка на загруженный файл
-        """
-        # TODO жуткая хуйня, скопированная из orders. Переделать
-        file_path = f"temp/{file.filename}"
-        with open(file_path, "wb") as f:
-            f.write(await file.read())
-        file_id = await self.storage.upload_file(
-            file_path, file.filename, current_user.id
-        )
-        return {"file_url": file_id}
