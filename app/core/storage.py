@@ -23,21 +23,18 @@ bucket_name = os.getenv("BUCKET_NAME")
 class SupabaseStorage:
     @staticmethod
     async def upload_file(
-            file_obj,
-            file_name: str,
-            user_id: uuid.UUID,
-            file_size,
-            content_type: str = "application/octet-stream"
+        file_obj,
+        file_name: str,
+        user_id: uuid.UUID,
+        file_size,
+        content_type: str = "application/octet-stream",
     ) -> Optional[str]:
         try:
             file_id = str(uuid.uuid4())
             supabase.storage.from_(bucket_name).upload(
                 path=file_id,
                 file=file_obj,
-                file_options={
-                    "content-type": content_type,
-                    "upsert": False
-                }
+                file_options={"content-type": content_type, "upsert": False},
             )
             async with PgSingleton().session as db:
                 file_record = Files(

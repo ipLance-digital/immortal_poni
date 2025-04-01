@@ -1,8 +1,4 @@
-from fastapi import (
-    APIRouter,
-    WebSocket,
-    WebSocketDisconnect
-)
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.core.database import PgSingleton
 from app.utils.websocket.chat.services import (
     validate_chat_and_user,
@@ -10,11 +6,12 @@ from app.utils.websocket.chat.services import (
 )
 from app.utils.websocket.websocket_manager import (
     ConnectionManager,
-    get_current_user_websocket
+    get_current_user_websocket,
 )
 
 router = APIRouter()
 manager = ConnectionManager()
+
 
 @router.websocket("/ws/chat/{chat_id}")
 async def websocket_endpoint(websocket: WebSocket, token: str, chat_id: int):

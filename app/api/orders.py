@@ -183,16 +183,15 @@ class OrdersApi(BaseApi):
         return f"Order id {order_uuid} deleted"
 
     async def attach_file_to_order(
-            self,
-            order_uuid: uuid.UUID,
-            file: UploadFile = File(...),
-            current_user: Users = Depends(BaseApi.get_current_user),
+        self,
+        order_uuid: uuid.UUID,
+        file: UploadFile = File(...),
+        current_user: Users = Depends(BaseApi.get_current_user),
     ):
         async with self.db as db:
             order = await db.execute(
                 select(Order).where(
-                    Order.id == order_uuid,
-                    Order.created_by == current_user.id
+                    Order.id == order_uuid, Order.created_by == current_user.id
                 )
             )
             order = order.scalar_one_or_none()
@@ -210,25 +209,18 @@ class OrdersApi(BaseApi):
                     file_name=file.filename,
                     user_id=current_user.id,
                     file_size=file_size,
-                    content_type=file.content_type
+                    content_type=file.content_type,
                 )
-                attachment = OrderAttachment(
-                    order_id=order.id,
-                    file_id=file_id
-                )
+                attachment = OrderAttachment(order_id=order.id, file_id=file_id)
                 db.add(attachment)
                 await db.commit()
 
-                return {
-                    "file_id": file_id,
-                    "message": "File attached successfully"
-                }
+                return {"file_id": file_id, "message": "File attached successfully"}
 
             except Exception as e:
                 await db.rollback()
                 raise HTTPException(
-                    status_code=500,
-                    detail=f"Error attaching file: {str(e)}"
+                    status_code=500, detail=f"Error attaching file: {str(e)}"
                 )
 
     async def delete_file_from_order(
