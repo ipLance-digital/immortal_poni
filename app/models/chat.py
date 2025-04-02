@@ -56,8 +56,6 @@ class ChatAttachment(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), default=uuid.uuid4, primary_key=True
     )
-    chat_id: Mapped[int] = mapped_column(
-        ForeignKey("chats.id"), nullable=False
-    )
+    chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), nullable=False)
     file_id: Mapped[str] = mapped_column(String, nullable=False)
     chat = relationship("Chat", back_populates="attachments")

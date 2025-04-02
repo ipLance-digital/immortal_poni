@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
-from app.core.database import PgSingleton
-from app.core.redis import RedisSingleton
+from app.core.database import PgSingleton, RedisSingleton
 from app.routers import get_router
 from contextlib import asynccontextmanager
 from sqlalchemy import text
