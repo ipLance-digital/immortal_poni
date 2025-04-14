@@ -23,9 +23,14 @@ x-common-environment: &common-environment
   PORT: ${PORT}
   PYTHONPATH: ${PYTHONPATH}
 
+x-default-build: &default-build
+  context: .
+  dockerfile: Dockerfile
+
 services:
   web:
-    build: .
+    build: *default-build
+    image: iplance:latest
     container_name: ipWeb
     ports:
       - "8000:8000"
@@ -37,10 +42,9 @@ services:
       <<: *common-environment
 
   flower:
-    build: .
+    image: iplance:latest
     container_name: ipFlower
-    command:
-      celery -A app.core.celery:celery_app flower --port=5555 --address=0.0.0.0
+    command: celery -A app.core.celery:celery_app flower --port=5555 --address=0.0.0.0
     ports:
       - "5555:5555"
     volumes:
@@ -51,7 +55,7 @@ services:
       <<: *common-environment
 
   celery_alpha_worker:
-    build: .
+    image: iplance:latest
     container_name: celery_alpha_worker
     command:
       - celery
@@ -70,7 +74,7 @@ services:
       <<: *common-environment
 
   celery_beat:
-    build: .
+    image: iplance:latest
     container_name: ipCeleryBeat
     command:
       - celery
