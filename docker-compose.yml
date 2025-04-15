@@ -57,6 +57,7 @@ services:
   celery_alpha_worker:
     image: iplance:latest
     container_name: celery_alpha_worker
+    restart: always
     command:
       - celery
       - -A
