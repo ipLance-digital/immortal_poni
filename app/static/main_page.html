@@ -6,7 +6,7 @@
   <title>Скоро открытие</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
     body, html {
@@ -23,13 +23,6 @@
       width: 100%;
       height: 100%;
       perspective: 1000px;
-    }
-
-    .container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      perspective: 1000px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -37,15 +30,19 @@
       text-align: center;
     }
 
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
     .background-text {
-      position: absolute;
-      top: 45%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       font-family: 'Orbitron', sans-serif;
       font-size: 64px;
       font-weight: bold;
-      z-index: 1;
       color: transparent;
       -webkit-background-clip: text;
       background: linear-gradient(270deg, #6a0dad, #00f0ff, #6a0dad);
@@ -53,18 +50,15 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       animation: textGlow 15s ease-in-out infinite;
-      border: 5px solid rgba(255, 255, 255, 0.0);
-      padding: 10px 20px;
-      border-radius: 15px;
       text-align: center;
     }
 
-     .sub-text {
+    .sub-text {
       font-family: 'Montserrat', sans-serif;
-      font-size: 10px;
+      font-size: 13px;
       font-weight: 100;
       color: #ccc;
-      margin-top: 60px;
+      margin-top: 10px;
       letter-spacing: 2px;
     }
 
@@ -79,6 +73,7 @@
       z-index: 2;
       opacity: 0.7;
     }
+
     .year-text {
       position: absolute;
       bottom: 10px;
@@ -90,6 +85,7 @@
       z-index: 2;
       opacity: 0.7;
     }
+
     .cube {
       position: absolute;
       width: 60px;
@@ -137,8 +133,11 @@
 <body>
 
   <div class="container">
-    <div class="background-text">IpI</div>
-    <div class="sub-text">prepare for change</div>
+    <div class="title-block">
+      <div class="background-text">IpI</div>
+      <div class="sub-text">prepare for change</div>
+    </div>
+
     <div class="cube" style="top:10%; left:20%; animation-delay: 0s; width: 40px; height: 40px;"></div>
     <div class="cube" style="top:50%; left:70%; animation-delay: 2s; width: 100px; height: 100px;"></div>
     <div class="cube" style="top:20%; left:80%; animation-delay: 4s; width: 50px; height: 50px;"></div>
