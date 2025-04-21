@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Glowing Cubes Smooth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Общие стили для страницы */
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+
+    /* Контейнер для 3D эффекта */
+    .container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      perspective: 1000px;
+    }
+
+    /* Стили для текста с эффектом свечения */
+    .background-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 64px;
+      font-weight: bold;
+      z-index: 1;
+      color: transparent;
+      -webkit-background-clip: text;
+      background: linear-gradient(270deg, #6a0dad, #00f0ff, #6a0dad);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: textGlow 15s ease-in-out infinite;
+      border: 5px solid rgba(255, 255, 255, 0.0); /* Полупрозрачная рамка */
+      padding: 10px 20px;
+      border-radius: 15px;
+    }
+
+    /* Стили для кубов */
+    .cube {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      filter: blur(3px);
+      background: linear-gradient(270deg, #6a0dad, #00f0ff, #9d4edd, #6a0dad);
+      background-size: 600% 600%;
+      border-radius: 12px;
+      opacity: 0.9;
+      box-shadow: 0 0 20px #9d4edd, 0 0 40px #6a0dad;
+      animation: move 25s infinite alternate ease-in-out, glow 15s infinite ease-in-out;
+      transform-style: preserve-3d;
+      z-index: 0;
+    }
+
+    /* Размытие для заднего плана кубов */
+    .cube-blur {
+      filter: blur(8px);
+      opacity: 0.4;
+      animation-duration: 80s;
+      z-index: -1; /* За текстом */
+    }
+
+    /* Анимации */
+    @keyframes textGlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes move {
+      0%   { transform: translate(0px, 0px); }
+      20%  { transform: translate(100px, -150px); }
+      40%  { transform: translate(-120px, 200px); }
+      60%  { transform: translate(150px, 100px); }
+      80%  { transform: translate(-180px, -100px); }
+      100% { transform: translate(80px, -200px); }
+    }
+
+    @keyframes glow {
+      0% { background-position: 0% 50%; box-shadow: 0 0 20px #9d4edd, 0 0 40px #6a0dad; }
+      50% { background-position: 100% 50%; box-shadow: 0 0 30px #00f0ff, 0 0 60px #6a0dad; }
+      100% { background-position: 0% 50%; box-shadow: 0 0 20px #9d4edd, 0 0 40px #6a0dad; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Текст с эффектом свечения -->
+    <div class="background-text">IpI</div>
+
+    <!-- Кубы -->
+    <div class="cube" style="top:10%; left:20%; animation-delay: 0s; width: 40px; height: 40px;"></div>
+    <div class="cube" style="top:50%; left:70%; animation-delay: 2s; width: 100px; height: 100px;"></div>
+    <div class="cube" style="top:20%; left:80%; animation-delay: 4s; width: 50px; height: 50px;"></div>
+    <div class="cube" style="top:70%; left:30%; animation-delay: 1s; width: 80px; height: 80px;"></div>
+    <div class="cube" style="top:40%; left:10%; animation-delay: 3s; width: 45px; height: 45px;"></div>
+    <div class="cube" style="top:80%; left:50%; animation-delay: 5s; width: 60px; height: 60px;"></div>
+    <div class="cube" style="top:30%; left:60%; animation-delay: 6s; width: 55px; height: 55px;"></div>
+
+    <!-- Кубы с размытиями для фона -->
+    <div class="cube cube-blur" style="top:5%; left:10%; animation-delay: 0s; width: 550px; height: 550px;"></div>
+    <div class="cube cube-blur" style="top:60%; left:80%; animation-delay: 3s; width: 500px; height: 500px;"></div>
+  </div>
+
+</body>
+</html>
+</title>
+</head>
+<body>
+
+</body>
+</html>

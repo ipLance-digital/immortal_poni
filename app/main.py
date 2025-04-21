@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
+from fastapi.responses import HTMLResponse
 from app.core.database import PgSingleton, RedisSingleton
 from app.routers import get_router
 from contextlib import asynccontextmanager
@@ -62,7 +63,9 @@ app.include_router(websocket_router)
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to IP-lance"}
+    with open("app/services/static/main_page.html", "r") as file:
+        content = file.read()
+    return HTMLResponse(content=content)
 
 
 if __name__ == "__main__":
