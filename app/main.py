@@ -63,7 +63,7 @@ app.include_router(websocket_router)
 
 @app.get("/")
 def root():
-    with open("app/services/static/main_page.html", "r") as file:
+    with open("app/static/main_page.html", "r") as file:
         content = file.read()
     return HTMLResponse(content=content)
 
