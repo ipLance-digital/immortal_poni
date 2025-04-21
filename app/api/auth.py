@@ -151,7 +151,7 @@ class AuthApi(BaseApi):
                     return {"message": "Successfully logged out"}
         except JWTError:
             logger.warning(f"Invalid token for user {current_user.username}")
-        raise HTTPException(status_code=400, detail="Invalid token")
+            raise HTTPException(status_code=400, detail="Invalid token")
 
     async def refresh_access_token(
         self,
