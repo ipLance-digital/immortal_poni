@@ -18,3 +18,10 @@ class LoginRequest(BaseModel):
                 "'phone' must be provided"
             )
         return v
+
+class YandexTokenRequest(BaseModel):
+    grant_type: str = "authorization_code"
+    code: str
+    client_id: str
+    client_secret: str
+    redirect_uri: str = "http://ip-lance.com"

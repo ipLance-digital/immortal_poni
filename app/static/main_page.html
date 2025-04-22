@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
-
   <style>
     body, html {
       margin: 0;
@@ -28,6 +27,28 @@
       align-items: center;
       justify-content: center;
       text-align: center;
+    }
+
+    .auth-button {
+      position: absolute;
+      top: 30px;
+      background: linear-gradient(90deg, #6a0dad, #00f0ff);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
+      z-index: 3;
+      box-shadow: 0 0 15px #6a0dad;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .auth-button:hover {
+      box-shadow: 0 0 25px #00f0ff;
+      transform: scale(1.05);
     }
 
     .title-block {
@@ -133,6 +154,12 @@
 <body>
 
   <div class="container">
+
+    <!-- Кнопка авторизации через Яндекс -->
+    <a href="https://oauth.yandex.ru/authorize?response_type=code&client_id=61f68b5f8d8c4ff2b682b30fdb0bf006&redirect_uri=http://127.0.0.1:8000/api/v1/auth/yandex/callback/" class="auth-button">
+      Авторизоваться через Яндекс
+    </a>
+
     <div class="title-block">
       <div class="background-text">IpI</div>
       <div class="sub-text">prepare for change</div>

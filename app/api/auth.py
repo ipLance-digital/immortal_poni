@@ -1,3 +1,5 @@
+import secrets
+from fastapi.responses import RedirectResponse
 from typing import Annotated
 from datetime import datetime, UTC
 import os
@@ -11,10 +13,11 @@ from fastapi import (
     Response,
     status,
 )
+import httpx
 from app.api.base import BaseApi
 from app.core.logger import logger
 from app.models.users import Users
-from app.schemas.auth import LoginRequest
+from app.schemas.auth import LoginRequest, YandexTokenRequest
 from app.schemas.users import (
     UserCreate,
     UserResponse,
@@ -22,6 +25,8 @@ from app.schemas.users import (
 
 
 class AuthApi(BaseApi):
+    YANDEX_USERINFO_URL = "https://login.yandex.ru/info"
+
     def __init__(self):
         super().__init__()
         self.tags = ["Authentication"]
@@ -51,6 +56,11 @@ class AuthApi(BaseApi):
             "/refresh",
             self.refresh_access_token,
             methods=["POST"],
+        )
+        self.router.add_api_route(
+            "/yandex/callback",
+            self.yandex_callback,
+            methods=["GET"]
         )
 
     async def read_users_me(
@@ -197,3 +207,89 @@ class AuthApi(BaseApi):
             response, access_token, refresh_token, csrf_token
         )
         return f"Create access tocken for {username}"
+
+    async def yandex_callback(self, request: Request, response: Response):
+        code = request.query_params.get('code')
+        if not code:
+            raise HTTPException(
+                status_code=400,
+                detail="No code provided"
+            )
+
+        token_request = YandexTokenRequest(
+            code=code,
+            client_id=os.getenv("YANDEX_CLIENT_ID"),
+            client_secret=os.getenv("YANDEX_CLIENT_SECRET"),
+        )
+
+        async with httpx.AsyncClient() as client:
+            token_resp = await client.post(
+                "https://oauth.yandex.ru/token",
+                data=token_request.model_dump()
+            )
+
+        if token_resp.status_code != 200:
+            raise HTTPException(
+                status_code=401,
+                detail=f"Failed to get access token from Yandex: {token_resp.text}"
+            )
+
+        token_data = token_resp.json()
+        access_token = token_data.get("access_token")
+
+        if not access_token:
+            raise HTTPException(
+                status_code=401,
+                detail="No access token in response"
+            )
+
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                self.YANDEX_USERINFO_URL,
+                headers={"Authorization": f"OAuth {access_token}"}
+            )
+
+        if resp.status_code != 200:
+            raise HTTPException(
+                status_code=401,
+                detail=f"Failed to fetch user info from Yandex: {resp.text}"
+            )
+
+        user_info = resp.json()
+        yandex_id = user_info["id"]
+        email = user_info.get("default_email")
+        name = user_info.get("real_name") or f"user_{yandex_id}"
+
+        async with self.db as db:
+            result = await db.execute(select(Users).where(Users.email == email))
+            user = result.scalars().first()
+            if not user:
+                user = Users(
+                    username=name,
+                    email=email,
+                    hashed_password=secrets.token_hex(32),
+                    phone=user_info.get("default_phone_number", ""),
+                )
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
+
+        tokens = await self.security.create_and_store_tokens(
+            {"sub": user.username},
+            response
+        )
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
+        csrf_token = tokens["csrf_token"]
+
+        response = RedirectResponse(url="http://ip-lance.com:3000")
+
+        response.set_cookie("access_token", access_token, httponly=False, domain="ip-lance.com")
+        response.set_cookie("refresh_token", refresh_token, httponly=False, domain="ip-lance.com")
+        response.set_cookie("csrf_token", csrf_token, httponly=False, domain="ip-lance.com")
+
+        response.headers["X-CSRF-TOKEN"] = csrf_token
+
+        return response
+
+
