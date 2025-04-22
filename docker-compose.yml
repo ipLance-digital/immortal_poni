@@ -59,6 +59,8 @@ services:
       - redis
     environment:
       <<: *common-environment
+    networks:
+      - ip-lance-net
 
   celery_alpha_worker:
     image: iplance:latest
@@ -79,6 +81,9 @@ services:
       - redis
     environment:
       <<: *common-environment
+    networks:
+      - ip-lance-net
+
 
   celery_beat:
     image: iplance:latest
@@ -96,6 +101,8 @@ services:
       - redis
     environment:
       <<: *common-environment
+    networks:
+      - ip-lance-net
 
   redis:
     image: redis:latest
@@ -106,6 +113,8 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --maxclients 2000 --maxmemory 100mb --maxmemory-policy allkeys-lru
+    networks:
+      - ip-lance-net
 
 volumes:
   redis_data:
