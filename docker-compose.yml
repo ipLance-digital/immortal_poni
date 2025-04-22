@@ -2,7 +2,7 @@ version: '3.8'
 
 networks:
   ip-lance-net:
-    driver: bridge
+    external: true
 
 x-common-environment: &common-environment
   REDIS_HOST: redis
