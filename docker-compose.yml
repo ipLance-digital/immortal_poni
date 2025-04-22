@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  ip-lance-net:
+    driver: bridge
+
 x-common-environment: &common-environment
   REDIS_HOST: redis
   DATABASE_URL: ${DATABASE_URL}
@@ -40,6 +44,8 @@ services:
       - redis
     environment:
       <<: *common-environment
+    networks:
+      - ip-lance-net
 
   flower:
     image: iplance:latest
@@ -100,7 +106,6 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --maxclients 2000 --maxmemory 100mb --maxmemory-policy allkeys-lru
-
 
 volumes:
   redis_data:
