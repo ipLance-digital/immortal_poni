@@ -1,3 +1,5 @@
+import os
+
 from pydantic import BaseModel, validator
 from typing import Optional
 
@@ -24,4 +26,4 @@ class YandexTokenRequest(BaseModel):
     code: str
     client_id: str
     client_secret: str
-    redirect_uri: str = "http://ip-lance.com"
+    redirect_uri: str = os.getenv("BE_URL")
