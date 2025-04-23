@@ -279,7 +279,7 @@ class AuthApi(BaseApi):
         )
         response.set_cookie("access_token", tokens["access_token"], httponly=True)
         response.set_cookie("refresh_token", tokens["refresh_token"], httponly=True)
-        response.set_cookie("csrf_token", tokens["csrf_token"], httponly=True)
+        response.set_cookie("csrf_token", tokens["csrf_token"])
         response.headers["X-CSRF-TOKEN"] = tokens["csrf_token"]
 
         return response
