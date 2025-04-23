@@ -29,10 +29,26 @@
       text-align: center;
     }
 
-    #buttonContainerId {
+    .auth-button {
       position: absolute;
       top: 30px;
+      background: linear-gradient(90deg, #6a0dad, #00f0ff);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: 'Orbitron', sans-serif;
+      cursor: pointer;
       z-index: 3;
+      box-shadow: 0 0 15px #6a0dad;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .auth-button:hover {
+      box-shadow: 0 0 25px #00f0ff;
+      transform: scale(1.05);
     }
 
     .title-block {
@@ -134,14 +150,15 @@
       100% { background-position: 0% 50%; box-shadow: 0 0 20px #9d4edd, 0 0 40px #6a0dad; }
     }
   </style>
-<script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk-suggest-with-polyfills-latest.js"></script>
-
 </head>
 <body>
 
   <div class="container">
 
-    <div id="buttonContainerId"></div>
+    <!-- Кнопка авторизации через Яндекс -->
+    <a href="https://oauth.yandex.ru/authorize?response_type=code&client_id=61f68b5f8d8c4ff2b682b30fdb0bf006&redirect_uri=http://ip-lance.com/api/v1/auth/yandex/callback/" class="auth-button">
+      Авторизоваться через Яндекс
+    </a>
 
     <div class="title-block">
       <div class="background-text">IpI</div>
@@ -163,29 +180,6 @@
     <div class="year-text">2025</div>
 
   </div>
-
-  <script>
-    window.YaAuthSuggest.init(
-      {
-        client_id: "61f68b5f8d8c4ff2b682b30fdb0bf006",
-        response_type: "token",
-        redirect_uri: "http://ip-lance.com"
-      },
-      "http://ip-lance.com",
-      {
-        view: "button",
-        parentId: "buttonContainerId",
-        buttonSize: 'l',
-        buttonView: 'icon',
-        buttonTheme: 'light',
-        buttonBorderRadius: "18",
-        buttonIcon: 'yaEng',
-      }
-    )
-    .then(({handler}) => handler())
-    .then(data => console.log('Сообщение с токеном', data))
-    .catch(error => console.log('Обработка ошибки', error));
-  </script>
 
 </body>
 </html>
