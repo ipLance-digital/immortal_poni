@@ -208,58 +208,53 @@ class AuthApi(BaseApi):
         )
         return f"Create access tocken for {username}"
 
-    async def yandex_callback(self, request: Request, response: Response):
+    async def yandex_callback(self, request: Request):
+        """
+            Авторизация через ЯндексID.
+        """
         code = request.query_params.get('code')
         if not code:
             raise HTTPException(
                 status_code=400,
                 detail="No code provided"
             )
-
         token_request = YandexTokenRequest(
             code=code,
             client_id=os.getenv("YANDEX_CLIENT_ID"),
             client_secret=os.getenv("YANDEX_CLIENT_SECRET"),
         )
-
         async with httpx.AsyncClient() as client:
             token_resp = await client.post(
                 "https://oauth.yandex.ru/token",
                 data=token_request.model_dump()
             )
-
         if token_resp.status_code != 200:
             raise HTTPException(
                 status_code=401,
                 detail=f"Failed to get access token from Yandex: {token_resp.text}"
             )
-
         token_data = token_resp.json()
         access_token = token_data.get("access_token")
-
         if not access_token:
             raise HTTPException(
                 status_code=401,
                 detail="No access token in response"
             )
-
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 self.YANDEX_USERINFO_URL,
                 headers={"Authorization": f"OAuth {access_token}"}
             )
-
         if resp.status_code != 200:
             raise HTTPException(
                 status_code=401,
                 detail=f"Failed to fetch user info from Yandex: {resp.text}"
             )
-
         user_info = resp.json()
         yandex_id = user_info["id"]
         email = user_info.get("default_email")
-        name = user_info.get("real_name") or f"user_{yandex_id}"
-
+        name = user_info.get("display_name") or f"user_{yandex_id}"
+        fio = user_info.get("real_name")
         async with self.db as db:
             result = await db.execute(select(Users).where(Users.email == email))
             user = result.scalars().first()
@@ -267,29 +262,14 @@ class AuthApi(BaseApi):
                 user = Users(
                     username=name,
                     email=email,
+                    fio=fio,
                     hashed_password=secrets.token_hex(32),
                     phone=user_info.get("default_phone_number", ""),
                 )
                 db.add(user)
                 await db.commit()
                 await db.refresh(user)
-
-        tokens = await self.security.create_and_store_tokens(
-            {"sub": user.username},
-            response
-        )
-        access_token = tokens["access_token"]
-        refresh_token = tokens["refresh_token"]
-        csrf_token = tokens["csrf_token"]
-
         response = RedirectResponse(url="http://ip-lance.com:3000")
-
-        response.set_cookie("access_token", access_token, httponly=False, domain="ip-lance.com")
-        response.set_cookie("refresh_token", refresh_token, httponly=False, domain="ip-lance.com")
-        response.set_cookie("csrf_token", csrf_token, httponly=False, domain="ip-lance.com")
-
-        response.headers["X-CSRF-TOKEN"] = csrf_token
-
         return response
 
 
