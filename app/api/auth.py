@@ -270,6 +270,22 @@ class AuthApi(BaseApi):
                 await db.commit()
                 await db.refresh(user)
         response = RedirectResponse(url="http://ip-lance.com:3000")
+
+        tokens = await self.security.create_and_store_tokens(
+            {"sub": user.username},
+            response
+        )
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
+        csrf_token = tokens["csrf_token"]
+
+        response.set_cookie("access_token", access_token, httponly=False)
+        response.set_cookie("refresh_token", refresh_token, httponly=False)
+        response.set_cookie("csrf_token", csrf_token, httponly=False)
+
+        response.headers["X-CSRF-TOKEN"] = csrf_token
+
         return response
+
 
 
